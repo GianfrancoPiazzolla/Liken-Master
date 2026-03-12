@@ -1612,7 +1612,7 @@ function init(){
   if(!state.dailyKm) state.dailyKm=50;
   // default profile if none
   if(!state.profiles.length){
-    const p={id:uid(),name:'My Tesla',type:'BEV',color:PROFILE_COLORS[0],...DEFAULT_BEV};
+    const p={id:uid(),name:'My BEV',type:'BEV',color:PROFILE_COLORS[0],...DEFAULT_BEV};
     state.profiles.push(p);
     state.activeProfileId=p.id;
     saveState();
