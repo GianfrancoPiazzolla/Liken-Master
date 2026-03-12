@@ -905,7 +905,7 @@ function renderStations(){
     const ap = activeProfile();
     let summary = {eff:'—',saving:'—',retSOC:'—'};
     if(ap && ap.type==='BEV'){
-      const eff = calcEffectiveCost(st,ap,(ap.minlevel+ap.maxlevel)/2);
+      const eff = calcEffectiveCost(st,ap,ap.minlevel);
       const breakeven = (ap.icecost/ap.iceeff)*ap.beveff;
       if(eff!==null){
         summary.eff = eff.toFixed(3)+' €/kWh';
@@ -996,7 +996,7 @@ function updateStationSummary(i){
   const st = state.stations[i];
   const ap = activeProfile();
   if(!ap||ap.type!=='BEV') return;
-  const eff = calcEffectiveCost(st,ap,(ap.minlevel+ap.maxlevel)/2);
+  const eff = calcEffectiveCost(st,ap,ap.minlevel);
   const breakeven = (ap.icecost/ap.iceeff)*ap.beveff;
   const el = id=>document.getElementById(id);
   if(el(`ss-eff-${i}`)) el(`ss-eff-${i}`).textContent = eff!==null?eff.toFixed(3)+' €/kWh':'—';
@@ -1061,7 +1061,7 @@ function calcReturnSOC(station,v){
 
 function calcSavingsPerKm(station,v){
   if(!v||v.type!=='BEV') return null;
-  const effCost=calcEffectiveCost(station,v,(v.minlevel+v.maxlevel)/2);
+  const effCost=calcEffectiveCost(station,v,v.minlevel);
   if(effCost===null) return null;
   const iceCost=v.icecost/v.iceeff;
   const bevCostPerKm=effCost/v.beveff;
@@ -1328,7 +1328,7 @@ function renderRankingTable(ap){
     renderLegend([]);
     return;
   }
-  const midSOC=(ap.minlevel+ap.maxlevel)/2;
+  const midSOC=ap.minlevel;
   const breakeven=(ap.icecost/ap.iceeff)*ap.beveff;
   const ranked=state.stations.map((st,i)=>{
     const eff=calcEffectiveCost(st,ap,midSOC);
@@ -1367,7 +1367,7 @@ function renderRankingTable(ap){
         }).join('')}
       </tbody>
     </table>
-    <div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated at mid-SOC (${midSOC.toFixed(0)} %), starting from stated Max SOC Limit.</br>Lower €/kWh = better. ▼ = cheaper than ICE.</div>
+    <div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated at min-SOC (${midSOC.toFixed(0)} %). Lower €/kWh = better. ▼ = cheaper than ICE.</div>
   `;
 }
 
@@ -1382,7 +1382,7 @@ function updateStats(){
     return;
   }
   const isBEV=ap.type==='BEV';
-  const midSOC=(ap.minlevel+ap.maxlevel)/2;
+  const midSOC=ap.minlevel;
   const breakeven=(ap.icecost/ap.iceeff)*ap.beveff;
   const iceCostKm=ap.icecost/ap.iceeff;
 
@@ -1415,14 +1415,14 @@ function updateStats(){
     <div class="stat-card">
       <div class="stat-glow" style="background:var(--accent3)"></div>
       <div class="stat-label">ICE Cost</div>
-      <div class="stat-val">${iceCostKm.toFixed(3)}<span> €/Km</span></div>
+      <div class="stat-val">${iceCostKm.toFixed(2)}<span> €/Km</span></div>
       <div class="stat-sub">${ap.iceeff} Km/L @ ${ap.icecost} €/L</div>
     </div>
     ${isBEV?`
     <div class="stat-card">
       <div class="stat-glow" style="background:var(--accent)"></div>
       <div class="stat-label">BEV Breakeven</div>
-      <div class="stat-val">${breakeven.toFixed(3)}<span> €/kWh</span></div>
+      <div class="stat-val">${breakeven.toFixed(2)}<span> €/kWh</span></div>
       <div class="stat-sub">Max price to beat ICE</div>
     </div>`:''}
   </div>`;
@@ -1444,10 +1444,10 @@ function updateStats(){
           <div class="eff-bar">
             <div class="eff-bar-fill" style="width:${eff!==null?(eff/maxEff*100).toFixed(1):0} %;background:${isGood?color:'var(--danger)'}"></div>
           </div>
-          <div class="eff-val" style="color:${isGood?'var(--accent)':'var(--danger)'}">${eff!==null?eff.toFixed(3)+' €':'—'}</div>
+          <div class="eff-val" style="color:${isGood?'var(--accent)':'var(--danger)'}">${eff!==null?eff.toFixed(2)+' €/kWh':'—'}</div>
         </div>`;
     });
-    html+=`<div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated at mid-SOC (${midSOC.toFixed(0)} %), starting from stated Max SOC Limit.</div></div></div>`;
+    html+=`<div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated at min-SOC (${midSOC.toFixed(0)} %).</div></div></div>`;
 
     if(bestStation){
       html+=`
@@ -1465,7 +1465,7 @@ function updateStats(){
     // Yearly savings estimate
     const savCentsKm = bestStation ? calcSavingsPerKm(bestStation, ap) : null;
     if(bestStation && bestCost < breakeven && savCentsKm !== null && savCentsKm > 0){
-      const yearlySaving = savCentsKm / 100 * (state.dailyKm * 365);
+      const yearlySaving = savCentsKm * (state.dailyKm * 365);
       html+=`
       <div class="card" id="savings-card" style="border-color:var(--accent2)">
         <div class="card-title"><div class="card-title-icon">💰</div>Projected Savings</div>
@@ -1510,7 +1510,7 @@ function savingsValuesHTML(yearlySaving){
       <div class="stat-label">Yearly</div>
       <div class="stat-val" id="sav-yearly">${yearlySaving.toFixed(2)}<span> €</span></div>
       <div class="stat-bar" style="margin-top:10px">
-        <div class="stat-bar-fill" id="sav-bar" style="width:${Math.min(yearlySaving/20,100).toFixed(2)} %;background:linear-gradient(90deg,var(--accent2),var(--accent))"></div>
+        <div class="stat-bar-fill" id="sav-bar" style="width:${Math.min(yearlySaving,100).toFixed(2)} %;background:linear-gradient(90deg,var(--accent2),var(--accent))"></div>
       </div>
     </div>`;
 }
@@ -1528,7 +1528,7 @@ function recomputeSavings(){
   if(!bestStation || bestCost >= breakeven) return;
   const savCentsKm = calcSavingsPerKm(bestStation, ap);
   if(savCentsKm === null || savCentsKm <= 0) return;
-  const yearlySaving = savCentsKm / 100 * (state.dailyKm * 365);
+  const yearlySaving = savCentsKm * (state.dailyKm * 365);
   // Patch just the values without re-rendering the whole section
   const sv = document.getElementById('savings-values');
   if(sv) sv.innerHTML = savingsValuesHTML(yearlySaving);
