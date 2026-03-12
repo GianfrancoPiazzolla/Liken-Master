@@ -51,7 +51,7 @@ It goes beyond naive price-per-kWh comparisons by computing the **effective char
 LikenMaster supports multiple vehicle profiles so you can compare different cars or driving scenarios side by side.
 
 #### 🆔 Profile Identity
-- **Custom name** — name your profile anything (e.g. "My Tesla", "Wife's Leaf")
+- **Custom name** — name your profile anything (e.g. "My BEV", "Wife's BEV")
 - **Vehicle type** — choose between `⚡ BEV` (Battery Electric Vehicle) or `🛢️ ICE` (Internal Combustion Engine)
 - **Color tag** — assign a color from a predefined palette for visual identification across all charts and UI elements
 - **Profile pill switcher** — a horizontal scrollable pill bar at the top of the Vehicle tab lets you switch between profiles instantly
@@ -152,8 +152,8 @@ The **Graphs** tab contains four switchable chart views, all powered by **Chart.
 
 #### 4️⃣ Station Ranking Table
 - Switches from a canvas chart to a **sortable ranking table** view
-- Ranks all stations by effective charging cost (lowest = best) at mid-SOC
-- Rank badge colors: 🥇 teal (#1), 🥈 blue (#2), 🟠 orange (#3), others dimmed
+- Ranks all stations by effective charging cost (lowest = best) at min-SOC
+- Rank badge colors: teal (#1), blue (#2), orange (#3), others dimmed
 - Columns: Rank, Station Name, Effective Cost (€/kWh), vs ICE delta (€), Return SOC (%)
 - vs ICE delta is color-coded green/red inline
 
@@ -171,7 +171,7 @@ All chart views (except Ranking) display a **clickable legend** below the chart:
 The **Stats** tab provides a rich summary dashboard for the active BEV profile.
 
 #### 🔑 Key Metrics (top grid)
-- 🏆 **Best Station** — name of the cheapest effective-cost station at mid-SOC
+- 🏆 **Best Station** — name of the cheapest effective-cost station at min-SOC
 - 💶 **Best Effective Cost** — lowest €/kWh from your stations (highlighted chip)
 - ⚡ **ICE Breakeven** — the threshold price, always visible for reference
 - 🛡️ **vs Breakeven** — how many €/kWh below the breakeven the best station sits
@@ -268,7 +268,6 @@ The core mathematical model is what sets LikenMaster apart from simple price com
 effectiveCost(station, vehicle, soc%) =
     totalCost / netUsableEnergy
 
-where:
   energyAvailable   = capacity × soc / 100                 [kWh in battery now]
   energyToStation   = outwardKm / (Km/kWh)                  [kWh to drive there]
   energyAtStation   = energyAvailable − energyToStation     [kWh left on arrival]
