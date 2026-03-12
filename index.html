@@ -1343,7 +1343,7 @@ function renderRankingTable(ap){
     <table class="ranking-table" style="width:100%;border-collapse:separate;border-spacing:0 6px">
       <thead>
         <tr>
-          <th>#</th><th>Station</th><th>€/kWh</th><th>vs ICE</th><th>SOC</th>
+          <th>#</th><th>Station</th><th>€/kWh</th><th>vs ICE</th><th>Ret.SOC</th>
         </tr>
       </thead>
       <tbody>
@@ -1362,7 +1362,7 @@ function renderRankingTable(ap){
             </div></td>
             <td style="font-weight:700;color:${isGood?'var(--accent)':'var(--danger)'}">${r.eff.toFixed(2)}</td>
             <td><span class="badge ${isGood?'badge-green':'badge-red'}">${Math.abs(diff*100).toFixed(2)}&nbsp;€&nbsp;${isGood?'▼':'▲'}</span></td>
-            <td style="color:${r.retSOC>20?'var(--accent)':'var(--danger)'}">${r.retSOC.toFixed(1)}&nbsp;%</td>
+            <td style="color:${r.retSOC>20?'var(--accent)':'var(--danger)'}">${r.retSOC.toFixed(1)}%</td>
           </tr>`;
         }).join('')}
       </tbody>
