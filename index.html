@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trip Master">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <link rel="manifest" href="manifest.json">
+    <title>Trip Master</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00e676; --secondary: #29b6f6; --danger: #ff1744;
+            --warning: #ffd740; --tesla-red: #e21017; --accent-purple: #b39ddb;
+            --bg-color: #f0f2f5; --card-bg: #ffffff;
+            --text-color: #0d0d12; --input-bg: #e8eaed;
+            --border-color: #d0d4da; --label-color: #8892a0;
+            --modal-overlay: rgba(0,0,0,0.5);
+            --up-color: #00e676; --down-color: #ff1744;
+            --chart-bg: #ffffff;
+            --chart-grid: rgba(0,0,0,0.06);
+            --chart-tick: #8892a0;
+            --glow-primary: rgba(0,230,118,0.25);
+            --glow-danger: rgba(255,23,68,0.25);
+            --glow-blue: rgba(41,182,246,0.25);
+            --header-bg: rgba(255,255,255,0.85);
+            --accent-line: #e21017;
+            --card-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+            --card-shadow-hover: 0 8px 28px rgba(0,0,0,0.13), 0 2px 6px rgba(0,0,0,0.07);
+        }
+
+        #map { filter: saturate(1.8) brightness(1.02); }
+
+        [data-theme="dark"] {
+            --bg-color: #080b10; --card-bg: #0f1318;
+            --text-color: #e8edf2; --input-bg: #181d24;
+            --border-color: #1e2530; --label-color: #4a5568;
+            --modal-overlay: rgba(0,0,0,0.85);
+            --chart-bg: #0f1318;
+            --chart-grid: rgba(255,255,255,0.04);
+            --chart-tick: #4a5568;
+            --header-bg: rgba(8,11,16,0.92);
+            --card-shadow: 0 2px 16px rgba(0,0,0,0.4), 0 1px 4px rgba(0,0,0,0.3);
+            --card-shadow-hover: 0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        [data-theme="dark"] #map {
+            filter: brightness(0.55) contrast(2.1) saturate(2.0);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Syne', sans-serif;
+            background-color: var(--bg-color); color: var(--text-color);
+            margin: 0; display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden; transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* === HEADER === */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            background: var(--header-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            position: relative;
+            z-index: 100;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--tesla-red) 0%, transparent 60%);
+        }
+        .header-btns { display: flex; gap: 8px; align-items: center; }
+
+        h1 {
+            margin: 0; font-family: 'Syne', sans-serif; font-size: 1.05rem;
+            font-weight: 800; color: var(--tesla-red); text-transform: uppercase;
+            letter-spacing: 3px; display: flex; align-items: center; gap: 8px;
+        }
+        h1::before {
+            content: '';
+            display: inline-block; width: 8px; height: 8px;
+            background: var(--tesla-red);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--tesla-red), 0 0 16px rgba(226,16,23,0.4);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.7); }
+        }
+
+        /* === HEADER BUTTONS === */
+        .hdr-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 8px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            letter-spacing: 0.5px;
+        }
+        .hdr-btn:hover { background: var(--border-color); transform: translateY(-1px); }
+
+        /* === CONTAINER === */
+        .container { display: flex; flex-direction: column; padding: 10px 14px; gap: 8px; flex: 1; min-height: 0; overflow-y: auto; }
+
+        /* === CONFIG GRID === */
+        .config-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+            background: var(--card-bg); padding: 12px 14px; border-radius: 12px;
+            border: 1px solid var(--border-color); flex-shrink: 0;
+            box-shadow: var(--card-shadow);
+        }
+        .config-grid label {
+            font-size: 0.72rem; color: var(--label-color);
+            margin-bottom: 5px; display: block;
+            text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* === SEGMENTED CONTROL === */
+        .segmented-control {
+            display: flex; background: var(--input-bg);
+            border-radius: 8px; padding: 2px; border: 1px solid var(--border-color);
+        }
+        .segment {
+            flex: 1; border: none; background: transparent;
+            color: var(--label-color); padding: 8px 2px; font-size: 0.78rem;
+            cursor: pointer; border-radius: 6px; transition: all 0.18s ease;
+            font-weight: 700; font-family: 'JetBrains Mono', monospace;
+        }
+        .segment:hover:not(.active) { color: var(--text-color); background: var(--border-color); }
+
+        .segment.active[data-value="1.0"] { background: #00e676; color: #000; box-shadow: 0 2px 8px rgba(0,230,118,0.4); }
+        .segment.active[data-value="0.85"] { background: #ffd740; color: #000; box-shadow: 0 2px 8px rgba(255,215,64,0.4); }
+        .segment.active[data-value="0.70"] { background: #ff9100; color: #fff; box-shadow: 0 2px 8px rgba(255,145,0,0.4); }
+        .segment.active[data-value="0.55"] { background: #ff1744; color: #fff; box-shadow: 0 2px 8px rgba(255,23,68,0.4); }
+        #gpsPollingGroup .segment.active { background: var(--secondary); color: #000; box-shadow: 0 2px 8px rgba(41,182,246,0.4); }
+
+        /* === STAT CARDS === */
+        .grid-stats { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; flex-shrink: 0; }
+        .stat-card {
+            background: var(--card-bg);
+            padding: 10px 6px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--accent-color, var(--primary));
+            border-radius: 0 0 10px 10px;
+        }
+        .stat-card:hover { box-shadow: var(--card-shadow-hover); transform: translateY(-1px); }
+        .stat-label {
+            font-size: 0.62rem; color: var(--label-color);
+            text-transform: uppercase; display: block;
+            letter-spacing: 1px; font-family: 'JetBrains Mono', monospace;
+            font-weight: 600; margin-bottom: 4px;
+        }
+        .stat-value {
+            font-size: 0.82rem; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.5px;
+        }
+
+        /* === RANGE ESTIMATOR CARD === */
+        .range-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            padding: 10px 14px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .range-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+        }
+        .range-section { display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .range-label { font-size: 0.6rem; color: var(--label-color); text-transform: uppercase; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+        .range-value { font-size: 1.1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+        /* SOC Battery Visual */
+        .battery-widget {
+            display: flex; align-items: center; gap: 8px; flex: 2;
+        }
+        .battery-body {
+            flex: 1; height: 22px; background: var(--input-bg);
+            border: 2px solid var(--border-color); border-radius: 4px;
+            position: relative; overflow: hidden;
+        }
+        .battery-body::after {
+            content: '';
+            position: absolute; right: -6px; top: 50%;
+            transform: translateY(-50%);
+            width: 5px; height: 10px;
+            background: var(--border-color);
+            border-radius: 0 3px 3px 0;
+        }
+        .battery-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00e676, #69f0ae);
+            border-radius: 2px;
+            transition: width 0.6s ease, background 0.6s ease;
+            position: relative;
+        }
+        .battery-fill.warn { background: linear-gradient(90deg, #ffd740, #ffee58); }
+        .battery-fill.critical { background: linear-gradient(90deg, #ff1744, #ff5252); }
+        .battery-fill::after {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 60%);
+        }
+        .battery-soc-label { font-size: 0.85rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; min-width: 38px; text-align: right; }
+
+        /* === MAIN DISPLAY === */
+        .main-display { display: flex; gap: 10px; flex: 1; min-height: 0; }
+        #map { border-radius: 12px; border: 1px solid var(--border-color); flex: 1; min-height: 0; box-shadow: var(--card-shadow); }
+
+        /* === CHARTS PANEL === */
+        .charts-panel {
+            display: flex; flex-direction: column; gap: 8px;
+            width: 380px; flex-shrink: 0; min-height: 0;
+            overflow-y: auto;
+        }
+        .charts-panel::-webkit-scrollbar { width: 4px; }
+        .charts-panel::-webkit-scrollbar-track { background: transparent; }
+        .charts-panel::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+        /* === CHART CONTAINER === */
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--card-shadow);
+            display: flex; flex-direction: column;
+            flex-shrink: 0;
+            overflow: hidden;
+            position: relative;
+            transition: box-shadow 0.2s ease;
+            height: 160px;
+        }
+        .chart-container:hover { box-shadow: var(--card-shadow-hover); }
+        .chart-container.tall { height: 190px; }
+        .chart-container.short { height: 140px; }
+
+        /* Chart header bar */
+        .chart-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 7px 10px 5px;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .chart-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.2px;
+            color: var(--label-color);
+        }
+        .chart-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.58rem; font-weight: 600;
+            padding: 2px 6px; border-radius: 20px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .chart-badge.alt { background: rgba(255,215,64,0.15); color: #ffd740; border: 1px solid rgba(255,215,64,0.3); }
+        .chart-badge.cons { background: rgba(255,23,68,0.15); color: #ff1744; border: 1px solid rgba(255,23,68,0.3); }
+        .chart-badge.energy { background: rgba(0,230,118,0.15); color: #00e676; border: 1px solid rgba(0,230,118,0.3); }
+        .chart-badge.weather { background: rgba(41,182,246,0.15); color: #29b6f6; border: 1px solid rgba(41,182,246,0.3); }
+        .chart-badge.speed { background: rgba(179,157,219,0.2); color: #b39ddb; border: 1px solid rgba(179,157,219,0.4); }
+        .chart-badge.power { background: rgba(255,145,0,0.15); color: #ff9100; border: 1px solid rgba(255,145,0,0.3); }
+        .chart-badge.regen { background: rgba(0,230,118,0.15); color: #00e676; border: 1px solid rgba(0,230,118,0.3); }
+
+        /* Canvas area */
+        .chart-canvas-area {
+            flex: 1; min-height: 0; padding: 6px 8px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        canvas { flex: 1; min-height: 0; width: 100% !important; }
+
+        /* === ENERGY CHART STATS ROW === */
+        .energy-stats-row {
+            display: flex; justify-content: space-around;
+            padding: 4px 8px 6px;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .energy-stat { text-align: center; }
+        .energy-stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--label-color); display: block;
+        }
+        .energy-stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem; font-weight: 700;
+        }
+        .energy-stat-value.consumed { color: #ff1744; }
+        .energy-stat-value.recovered { color: #00e676; }
+        .energy-stat-value.efficiency { color: #ffd740; }
+
+        /* === REGEN EFFICIENCY GAUGE === */
+        .regen-gauge-wrap {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; padding: 8px;
+            gap: 6px;
+        }
+        .regen-arc-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem; font-weight: 700;
+            color: var(--primary);
+        }
+        .regen-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.58rem; color: var(--label-color);
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        /* === POWER FLOW BARS === */
+        .powerflow-wrap {
+            flex: 1; padding: 6px 10px; display: flex; flex-direction: column; justify-content: center; gap: 7px;
+        }
+        .pf-row { display: flex; align-items: center; gap: 8px; }
+        .pf-icon { font-size: 0.85rem; width: 20px; text-align: center; }
+        .pf-label { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--label-color); text-transform: uppercase; letter-spacing: 0.8px; width: 58px; }
+        .pf-bar-bg { flex: 1; height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden; }
+        .pf-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+        .pf-bar-fill.drag { background: linear-gradient(90deg, #ff5252, #ff1744); }
+        .pf-bar-fill.gravity { background: linear-gradient(90deg, #ffd740, #ffb300); }
+        .pf-bar-fill.wind { background: linear-gradient(90deg, #29b6f6, #0288d1); }
+        .pf-bar-fill.regen-b { background: linear-gradient(90deg, #00e676, #00c853); }
+        .pf-val { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 700; width: 38px; text-align: right; }
+
+        /* === WEATHER PANEL === */
+        .weather-display {
+            width: 100%; display: flex; align-items: center;
+            justify-content: space-around; gap: 5px; flex: 1;
+            padding: 0 4px;
+        }
+        .weather-column { display: flex; flex-direction: column; gap: 6px; flex: 1; font-size: 0.7rem; color: var(--label-color); }
+        .weather-center { display: flex; flex-direction: column; align-items: center; flex: 1.2; }
+        .weather-icon { font-size: 4.5rem; display: block; line-height: 1; padding-top: 5px; }
+        .weather-temp { font-size: 1.2rem; font-weight: 700; color: var(--text-color); display: block; font-family: 'JetBrains Mono', monospace; }
+        .weather-item { line-height: 1.3; }
+        .weather-item span.wlabel {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.8px;
+            color: var(--label-color); display: block;
+        }
+        .weather-item b { color: var(--text-color); font-size: 0.82rem; font-family: 'JetBrains Mono', monospace; transition: color 0.3s ease; }
+
+        /* === CONTROLS === */
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-bottom: 4px; flex-shrink: 0; }
+        .action-btn {
+            border: none; padding: 13px; border-radius: 10px;
+            font-size: 0.9rem; font-weight: 800; cursor: pointer;
+            text-transform: uppercase; transition: all 0.18s ease;
+            font-family: 'Syne', sans-serif; letter-spacing: 2px;
+            position: relative; overflow: hidden;
+        }
+        .action-btn::after {
+            content: '';
+            position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.4s ease;
+        }
+        .action-btn:hover:not(:disabled)::after { left: 140%; }
+        .btn-start { background: linear-gradient(135deg, #00e676, #00c853); color: #000; box-shadow: 0 4px 0 #00912a, 0 6px 20px var(--glow-primary); }
+        .btn-start:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 #00912a, 0 10px 28px var(--glow-primary); }
+        .btn-start.active { background: #2a2e35; color: #4a5568; box-shadow: 0 2px 0 #1a1e25; cursor: not-allowed; opacity: 0.6; }
+        .btn-stop { background: linear-gradient(135deg, #ff1744, #d50000); color: #fff; box-shadow: 0 4px 0 #9b0000, 0 6px 20px var(--glow-danger); }
+        .btn-stop:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 #9b0000, 0 10px 28px var(--glow-danger); }
+        .btn-stop:disabled { background: #2a2e35; color: #4a5568; box-shadow: 0 2px 0 #1a1e25; cursor: not-allowed; opacity: 0.6; }
+
+        input[type="number"] {
+            font-size: 15px !important; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 9px 10px;
+            border-radius: 8px; border: 1px solid var(--border-color);
+            background: var(--input-bg); color: var(--text-color);
+            width: 100%;
+            transition: border-color 0.2s ease;
+            outline: none;
+        }
+        input[type="number"]:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px var(--glow-blue); }
+
+        /* === MODAL === */
+        .modal {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: var(--modal-overlay);
+            backdrop-filter: blur(8px);
+        }
+        .modal-content {
+            background-color: var(--card-bg); margin: 10% auto; padding: 28px;
+            border: 1px solid var(--border-color); width: 80%; max-width: 520px;
+            border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            position: relative; line-height: 1.7;
+        }
+        .modal-content h2 {
+            font-family: 'Syne', sans-serif; font-weight: 800;
+            font-size: 1.1rem; letter-spacing: 2px; text-transform: uppercase;
+            color: var(--tesla-red); margin-top: 0;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 12px;
+        }
+        .close-modal {
+            position: absolute; top: 16px; right: 20px;
+            font-size: 1.4rem; cursor: pointer; color: var(--label-color);
+            line-height: 1; transition: color 0.2s;
+        }
+        .close-modal:hover { color: var(--text-color); }
+
+        /* === TRIP SUMMARY MODAL === */
+        .summary-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;
+        }
+        .summary-item {
+            background: var(--input-bg); border-radius: 8px; padding: 10px 14px;
+            border: 1px solid var(--border-color);
+        }
+        .summary-item-label { font-size: 0.62rem; color: var(--label-color); text-transform: uppercase; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+        .summary-item-value { font-size: 1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+
+        /* === SCORE BADGE === */
+        .score-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 14px; border-radius: 20px; margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.9rem;
+        }
+        .score-badge.excellent { background: rgba(0,230,118,0.15); color: #00e676; border: 1px solid rgba(0,230,118,0.3); }
+        .score-badge.good { background: rgba(255,215,64,0.15); color: #ffd740; border: 1px solid rgba(255,215,64,0.3); }
+        .score-badge.poor { background: rgba(255,23,68,0.15); color: #ff1744; border: 1px solid rgba(255,23,68,0.3); }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 1300px) {
+            .main-display { flex-direction: column; }
+            .charts-panel { width: 100%; flex-direction: row; flex-wrap: wrap; overflow-y: visible; }
+            .chart-container { width: calc(50% - 4px); flex: none; }
+            .grid-stats { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        @media (max-width: 800px) {
+            body { overflow-y: auto; height: auto; }
+            .container { height: auto; }
+            .main-display { display: block; }
+            #map { height: 250px; margin-bottom: 10px; }
+            .charts-panel { width: 100%; flex-direction: column; }
+            .chart-container { width: 100%; height: 160px; }
+            .grid-stats { grid-template-columns: repeat(2, 1fr); }
+            .config-grid { grid-template-columns: 1fr; }
+            .range-card { flex-wrap: wrap; }
+        }
+
+        /* === PROFILES MODAL === */
+        .profiles-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 280px; overflow-y: auto; }
+        .profiles-list::-webkit-scrollbar { width: 4px; }
+        .profiles-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        .profile-item {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--input-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 8px 12px; gap: 10px;
+        }
+        .profile-item-info { display: flex; flex-direction: column; flex: 1; }
+        .profile-item-name {
+            font-family: 'JetBrains Mono', monospace; font-weight: 700;
+            font-size: 0.85rem; color: var(--text-color);
+        }
+        .profile-item-details {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+            color: var(--label-color); margin-top: 2px; letter-spacing: 0.5px;
+        }
+        .profile-item-actions { display: flex; gap: 6px; }
+        .profile-action-btn {
+            border: 1px solid var(--border-color); background: var(--card-bg);
+            color: var(--text-color); border-radius: 6px; padding: 4px 10px;
+            font-size: 0.75rem; font-family: 'JetBrains Mono', monospace;
+            font-weight: 700; cursor: pointer; transition: all 0.18s ease;
+        }
+        .profile-action-btn:hover { background: var(--border-color); }
+        .profile-action-btn.load { color: var(--secondary); border-color: rgba(41,182,246,0.4); }
+        .profile-action-btn.load:hover { background: rgba(41,182,246,0.1); }
+        .profile-action-btn.del { color: var(--danger); border-color: rgba(255,23,68,0.4); }
+        .profile-action-btn.del:hover { background: rgba(255,23,68,0.1); }
+        .profile-save-row {
+            display: flow; gap: 8px; margin-top: 14px; align-items: center;
+            padding-top: 14px; border-top: 1px solid var(--border-color);
+        }
+        .profile-name-input {
+            flex: 1; font-size: 13px !important; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 8px 10px; border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg); color: var(--text-color);
+            outline: none; transition: border-color 0.2s ease;
+            width: 150px;
+        }
+        .profile-name-input:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px var(--glow-blue); }
+        .profile-save-btn {
+            border: none; background: linear-gradient(135deg, var(--secondary), #0288d1);
+            color: #000; border-radius: 8px; padding: 8px 16px;
+            font-size: 0.8rem; font-weight: 800; font-family: 'Syne', sans-serif;
+            letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+            transition: all 0.18s ease; white-space: nowrap;
+        }
+        .profile-save-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--glow-blue); }
+        .profiles-empty {
+            text-align: center; color: var(--label-color); font-size: 0.8rem;
+            font-style: italic; padding: 20px 0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body onload="initializeSystem()">
+
+<div class="header">
+    <h1>Trip Master</h1>
+    <div class="header-btns">
+        <button onclick="openProfilesModal()" class="hdr-btn" title="User Profiles">👤</button>
+        <button onclick="showSummary()" class="hdr-btn" title="Trip Summary">🧮</button>
+        <button onclick="toggleTheme()" id="themeBtn" class="hdr-btn">🌙</button>
+        <button onclick="toggleModal(true)" class="hdr-btn">⭐</button>
+    </div>
+</div>
+
+<!-- PROFILES MODAL -->
+<div id="profilesModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeProfilesModal()">&times;</span>
+        <h2>👤 EV Profiles</h2>
+        <div id="profilesList" class="profiles-list"></div>
+        <div class="profile-save-row">
+            <input type="text" id="profileNameInput" class="profile-name-input" placeholder="Profile name" maxlength="40">
+            <button class="profile-save-btn" onclick="saveProfile()">💾 Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- INFO MODAL -->
+<div id="infoModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="toggleModal(false)">&times;</span>
+        <h2>About Trip Master</h2>
+        <p><strong>Synopsis:</strong> High-performance, real-time EV trip tracking and energy analysis dashboard</p>
+        <p><strong>Author:</strong> Gianfranco Piazzolla</p>
+        <p><strong>GitHub repository:</strong> <a href="https://github.com/gianfrancopiazzolla/Trip-Master" target="_blank" style="color:var(--secondary); text-decoration:none;">Trip Master</a></p>
+        <p><strong>More Apps:</strong> <a href="https://github.com/gianfrancopiazzolla" target="_blank" style="color:var(--secondary); text-decoration:none;">GitHub</a></p>
+        <p><strong>License:</strong> Distributed under the MIT License. Feel free to use, modify, and share.</p>
+        <hr style="border:0; border-top:1px solid var(--border-color); margin:20px 0;">
+        <p style="font-style:italic; font-size:0.9rem; color:var(--label-color);">Developed for the sustainable mobility community. If you find this tool helpful, please leave a ⭐ on GitHub!</p>
+    </div>
+</div>
+
+<!-- TRIP SUMMARY MODAL -->
+<div id="summaryModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="document.getElementById('summaryModal').style.display='none'">&times;</span>
+        <h2>🏁 Trip Summary</h2>
+        <div id="summaryContent">
+            <p style="color:var(--label-color); font-style:italic;">No trip data yet. Start a trip to see the summary.</p>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- CONFIG ROW -->
+    <div class="config-grid">
+        <div style="display:flex; flex-direction:column;">
+            <label>Vehicle Weight (Kg)</label>
+            <input type="number" id="vehicleWeight" value="2200" step="50">
+        </div>
+        <div style="display:flex; flex-direction:column;">
+            <label>Thermal Efficiency (%@°C)</label>
+            <div class="segmented-control" id="tempEfficiencyGroup">
+                <button type="button" class="segment active" data-value="1.0">100@20</button>
+                <button type="button" class="segment" data-value="0.85">85@10</button>
+                <button type="button" class="segment" data-value="0.70">70@0</button>
+                <button type="button" class="segment" data-value="0.55">55@-10</button>
+            </div>
+            <input type="hidden" id="tempEfficiency" value="1.0">
+        </div>
+        <div style="display:flex; flex-direction:column;">
+            <label>Headwind (Km/h)</label>
+            <input type="number" id="windSpeed" value="0">
+        </div>
+        <div style="display:flex; flex-direction:column;">
+            <label>GPS Polling (s)</label>
+            <div class="segmented-control" id="gpsPollingGroup">
+                <button type="button" class="segment" data-value="1">1</button>
+                <button type="button" class="segment active" data-value="5">5</button>
+                <button type="button" class="segment" data-value="10">10</button>
+                <button type="button" class="segment" data-value="30">30</button>
+                <button type="button" class="segment" data-value="60">60</button>
+            </div>
+            <input type="hidden" id="gpsPolling" value="5">
+        </div>
+    </div>
+
+    <!-- RANGE ESTIMATOR + BATTERY SOC BAR -->
+    <div class="range-card">
+        <div class="range-section">
+            <span class="range-label">Battery (kWh)</span>
+            <input type="number" id="batteryCapacity" value="100" step="5" style="width:120px; font-size:13px !important; padding: 6px 8px; text-align:center;">
+        </div>
+        <div class="range-section">
+            <span class="range-label">Current SoC (%)</span>
+            <input type="number" id="socInput" value="100" min="0" max="100" step="1" style="width:120px; font-size:13px !important; padding:6px 8px; text-align:center;" oninput="updateBattery()">
+        </div>
+        <div class="battery-widget" style="flex:3;">
+            <div class="battery-body">
+                <div class="battery-fill" id="batteryFill" style="width:80%"></div>
+            </div>
+            <span class="battery-soc-label" id="socLabel">100%</span>
+        </div>
+        <div class="range-section">
+            <span class="range-label">Nominal Range</span>
+            <span class="range-value" id="estRange" style="color: var(--primary);">-- Km</span>
+        </div>
+        <div class="range-section">
+            <span class="range-label">Remaining Range</span>
+            <span class="range-value" id="remainRange" style="color: var(--secondary);">-- Km</span>
+        </div>
+    </div>
+
+    <!-- STAT CARDS (8 cards) -->
+    <div class="grid-stats">
+        <div class="stat-card" style="--accent-color: var(--secondary);"><span class="stat-label">Trip Distance</span><span class="stat-value" id="distDisplay">0.00 Km</span></div>
+        <div class="stat-card" style="--accent-color: var(--secondary);"><span class="stat-label">Average Speed</span><span class="stat-value" id="avgSpeedDisplay">0.0 Km/h</span></div>
+        <div class="stat-card" style="--accent-color: var(--danger);"><span class="stat-label">Run Consumption</span><span class="stat-value" id="consDisplay">0 Wh/Km</span></div>
+        <div class="stat-card" style="--accent-color: var(--primary);"><span class="stat-label">Brake Regen</span><span class="stat-value" id="regenDisplay">0 Wh</span></div>
+        <div class="stat-card" style="--accent-color: var(--warning);"><span class="stat-label">Route Altitude</span><span class="stat-value" id="altDisplay">-- m</span></div>
+        <div class="stat-card" style="--accent-color: var(--warning);"><span class="stat-label">Road Grade</span><span class="stat-value" id="gradeDisplay">0%</span></div>
+        <div class="stat-card" style="--accent-color: #ff9100;"><span class="stat-label">Instantaneous Power</span><span class="stat-value" id="powerDisplay">0 W</span></div>
+        <div class="stat-card" style="--accent-color: #b39ddb;"><span class="stat-label">Trip Time</span><span class="stat-value" id="tripTimeDisplay">00:00:00</span></div>
+    </div>
+
+    <!-- MAP + CHARTS SIDE BY SIDE -->
+    <div class="main-display">
+        <div id="map"></div>
+
+        <div class="charts-panel">
+
+            <!-- ALTITUDE PROFILE -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <span class="chart-title">Elevation Profile</span>
+                    <span class="chart-badge alt">m a.s.l.</span>
+                </div>
+                <div class="chart-canvas-area">
+                    <canvas id="altitudeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- CONSUMPTION VS SPEED SCATTER -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <span class="chart-title">Consumption vs Distance</span>
+                    <span class="chart-badge cons">Wh/Km</span>
+                </div>
+                <div class="chart-canvas-area">
+                    <canvas id="consumptionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- SPEED OVER DISTANCE -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <span class="chart-title">Speed Profile</span>
+                    <span class="chart-badge speed">Km/h</span>
+                </div>
+                <div class="chart-canvas-area">
+                    <canvas id="speedChart"></canvas>
+                </div>
+            </div>
+
+            <!-- ENERGY BALANCE -->
+            <div class="chart-container short" style="height:170px;">
+                <div class="chart-header">
+                    <span class="chart-title">Energy Balance</span>
+                    <span class="chart-badge energy">Wh</span>
+                </div>
+                <div class="chart-canvas-area">
+                    <canvas id="energyBalanceChart"></canvas>
+                </div>
+                <div class="energy-stats-row">
+                    <div class="energy-stat">
+                        <span class="energy-stat-label">⬇ Consumed</span>
+                        <span class="energy-stat-value consumed" id="energyConsumedLabel">0 Wh</span>
+                    </div>
+                    <div class="energy-stat">
+                        <span class="energy-stat-label">⬆ Recovered</span>
+                        <span class="energy-stat-value recovered" id="energyRegenLabel">0 Wh</span>
+                    </div>
+                    <div class="energy-stat">
+                        <span class="energy-stat-label">⚡ Efficiency</span>
+                        <span class="energy-stat-value efficiency" id="regenEffLabel">-- %</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- POWER BREAKDOWN BARS -->
+            <div class="chart-container short" style="height:150px;">
+                <div class="chart-header">
+                    <span class="chart-title">Power Breakdown</span>
+                    <span class="chart-badge power">Live</span>
+                </div>
+                <div class="powerflow-wrap">
+                    <div class="pf-row">
+                        <span class="pf-icon">🔄</span>
+                        <span class="pf-label">Rolling</span>
+                        <div class="pf-bar-bg"><div class="pf-bar-fill drag" id="dragBar" style="width:0%"></div></div>
+                        <span class="pf-val" id="dragVal">0 W</span>
+                    </div>
+                    <div class="pf-row">
+                        <span class="pf-icon">⛰️</span>
+                        <span class="pf-label">Gravity</span>
+                        <div class="pf-bar-bg"><div class="pf-bar-fill gravity" id="gravBar" style="width:0%"></div></div>
+                        <span class="pf-val" id="gravVal">0 W</span>
+                    </div>
+                    <div class="pf-row">
+                        <span class="pf-icon">💨</span>
+                        <span class="pf-label">Aero</span>
+                        <div class="pf-bar-bg"><div class="pf-bar-fill wind" id="windBar" style="width:0%"></div></div>
+                        <span class="pf-val" id="windVal">0 W</span>
+                    </div>
+                    <div class="pf-row">
+                        <span class="pf-icon">⚡</span>
+                        <span class="pf-label">Regen</span>
+                        <div class="pf-bar-bg"><div class="pf-bar-fill regen-b" id="regenBar" style="width:0%"></div></div>
+                        <span class="pf-val" id="regenBarVal">0 W</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WEATHER PANEL -->
+            <div class="chart-container" style="height:150px;">
+                <div class="chart-header">
+                    <span class="chart-title">Weather Condition</span>
+                    <span class="chart-badge weather">Live</span>
+                </div>
+                <div class="chart-canvas-area" style="padding:4px 6px;">
+                    <div class="weather-display">
+                        <div class="weather-column" style="text-align:right;">
+                            <div class="weather-item">
+                                <span class="wlabel">Temperature Min</span>
+                                <b id="tempMin">--</b> °C
+                            </div>
+                            <div class="weather-item">
+                                <span class="wlabel">Temperature Max</span>
+                                <b id="tempMax">--</b> °C
+                            </div>
+                            <div class="weather-item">
+                                <span class="wlabel">Relative Humidity</span>
+                                <b id="humidityVal">--</b> %
+                            </div>
+                        </div>
+                        <div class="weather-center">
+                            <span id="weatherIcon" class="weather-icon">--</span>
+                            <div class="weather-temp"><b id="weatherTemp">--</b> °C</div>
+                        </div>
+                        <div class="weather-column" style="text-align:left;">
+                            <div class="weather-item">
+                                <span class="wlabel">Wind Speed</span>
+                                <b id="windSpeedVal">--</b> Km/h
+                            </div>
+                            <div class="weather-item">
+                                <span class="wlabel">Wind Direction</span>
+                                <b id="windDirVal">--</b>
+                            </div>
+                            <div class="weather-item">
+                                <span class="wlabel">Atm. Pressure</span>
+                                <b id="pressure">--</b> hPa
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls">
+        <button id="btnStart" class="action-btn btn-start" onclick="startTracking()">▶ Start Trip</button>
+        <button id="btnStop" class="action-btn btn-stop" onclick="stopTracking()" disabled>⏹ Stop Trip</button>
+    </div>
+
+</div>
+
+<script>
+    let pollInterval = null, tripTimer = null;
+    let totalDistance = 0, totalRegenWh = 0, totalConsumedWh = 0, lastPoint = null;
+    let map, pathLine, altChart, consChart, energyChart, speedChart;
+    let startTime = null, tripSeconds = 0;
+    let currentTheme = 'light';
+    let isWeatherInitialSyncDone = false;
+    let lastSpeedKmh = 0;
+    let lastInstantPowerW = 0;
+    let initialSoc = 100;
+
+    // Per-segment power breakdown accumulator
+    let powerBreakdown = { drag: 0, gravity: 0, aero: 0, regen: 0, samples: 0 };
+
+    // Previous weather values for comparison
+    let prevWeather = { temp: null, min: null, max: null, hum: null, windSpd: null, windDir: null, press: null };
+
+    function initializeSystem() {
+        setupMap();
+        setupCharts();
+        setupSegmentedControl();
+        updateBattery();
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('infoModal')) toggleModal(false);
+            if (event.target == document.getElementById('summaryModal')) document.getElementById('summaryModal').style.display='none';
+            if (event.target == document.getElementById('profilesModal')) closeProfilesModal();
+        };
+
+        if ('wakeLock' in navigator) {
+            navigator.wakeLock.request('screen').catch(() => {});
+        }
+    }
+
+    /* ===== USER PROFILES ===== */
+    const PROFILES_KEY = 'tripmaster_profiles';
+
+    function getProfiles() {
+        try { return JSON.parse(localStorage.getItem(PROFILES_KEY)) || {}; }
+        catch(e) { return {}; }
+    }
+
+    function saveProfiles(profiles) {
+        localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+    }
+
+    function openProfilesModal() {
+        renderProfilesList();
+        document.getElementById('profilesModal').style.display = 'block';
+    }
+
+    function closeProfilesModal() {
+        document.getElementById('profilesModal').style.display = 'none';
+    }
+
+    function renderProfilesList() {
+        const profiles = getProfiles();
+        const container = document.getElementById('profilesList');
+        const keys = Object.keys(profiles);
+
+        if (keys.length === 0) {
+            container.innerHTML = '<div class="profiles-empty">No saved profiles yet.<br>Configure your settings and save a profile below.</div>';
+            return;
+        }
+
+        container.innerHTML = keys.map(name => {
+            const p = profiles[name];
+            return `
+            <div class="profile-item">
+                <div class="profile-item-info">
+                    <span class="profile-item-name">${escapeHtml(name)}</span>
+                    <span class="profile-item-details">
+                        Weight: <b>${p.vehicleWeight}</b> Kg</br>Battery: <b>${p.batteryKwh}</b> kWh</br>GPS: <b>${p.gpsPolling}</b> s</br>Theme: <b>${p.theme === 'dark' ? '🌙 Dark' : '☀️ Light'}</b>
+                    </span>
+                </div>
+                <div class="profile-item-actions">
+                    <button class="profile-action-btn load" onclick="loadProfile('${escapeHtml(name)}')">Load</button>
+                    <button class="profile-action-btn del" onclick="deleteProfile('${escapeHtml(name)}')">✕</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function saveProfile() {
+        const nameInput = document.getElementById('profileNameInput');
+        const name = nameInput.value.trim();
+        if (!name) { nameInput.focus(); return; }
+
+        const weight = document.getElementById('vehicleWeight').value;
+        const gpsPolling = document.getElementById('gpsPolling').value;
+        const batteryKwh = document.getElementById('batteryCapacity').value;
+
+        const profiles = getProfiles();
+        profiles[name] = { vehicleWeight: weight, gpsPolling: gpsPolling, batteryKwh: batteryKwh, theme: currentTheme };
+        saveProfiles(profiles);
+
+        nameInput.value = '';
+        renderProfilesList();
+    }
+
+    function loadProfile(name) {
+        const profiles = getProfiles();
+        const p = profiles[name];
+        if (!p) return;
+
+        document.getElementById('vehicleWeight').value = p.vehicleWeight;
+        document.getElementById('batteryCapacity').value = p.batteryKwh;
+        updateBattery();
+
+        // Update GPS polling segmented control
+        document.querySelectorAll('#gpsPollingGroup .segment').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-value') === String(p.gpsPolling)) {
+                btn.classList.add('active');
+            }
+        });
+        document.getElementById('gpsPolling').value = p.gpsPolling;
+
+        // Restore theme preference if saved
+        if (p.theme && p.theme !== currentTheme) {
+            toggleTheme();
+        }
+
+        closeProfilesModal();
+    }
+
+    function deleteProfile(name) {
+        const profiles = getProfiles();
+        delete profiles[name];
+        saveProfiles(profiles);
+        renderProfilesList();
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function setupSegmentedControl() {
+        const groups = ['#tempEfficiencyGroup', '#gpsPollingGroup'];
+        groups.forEach(groupId => {
+            document.querySelectorAll(groupId + ' .segment').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.querySelectorAll(groupId + ' .segment').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const hiddenInputId = groupId.replace('Group', '').replace('#', '');
+                    document.getElementById(hiddenInputId).value = this.getAttribute('data-value');
+                });
+            });
+        });
+    }
+
+    function updateBattery() {
+        const soc = Math.min(100, Math.max(0, parseInt(document.getElementById('socInput').value) || 0));
+        const fill = document.getElementById('batteryFill');
+        const label = document.getElementById('socLabel');
+        fill.style.width = soc + '%';
+        label.innerText = soc + '%';
+        fill.className = 'battery-fill' + (soc <= 15 ? ' critical' : soc <= 30 ? ' warn' : '');
+        computeRangeEstimate();
+    }
+
+    function computeRangeEstimate() {
+        const soc = parseFloat(document.getElementById('socInput').value) || 100;
+        const cap = parseFloat(document.getElementById('batteryCapacity').value) || 100;
+        const availableWh = cap * 1000 * (soc / 100);
+
+        if (totalConsumedWh > 1 && totalDistance > 100) {
+            const avgConsWh_km = totalConsumedWh / (totalDistance / 1000);
+            const estRange = (availableWh / avgConsWh_km).toFixed(0);
+            document.getElementById('estRange').innerText = estRange + ' Km';
+
+            const usedKm = totalDistance / 1000;
+            const remaining = Math.max(0, parseFloat(estRange) - usedKm);
+            document.getElementById('remainRange').innerText = remaining.toFixed(0) + ' Km';
+        } else {
+            // Use default 180 Wh/Km as baseline
+//            const estRange = (availableWh / 180).toFixed(0);
+            const estRange = '--';
+            document.getElementById('estRange').innerText = estRange + ' Km';
+            document.getElementById('remainRange').innerText = '-- Km';
+        }
+    }
+
+    function applyValueStyle(elementId, newValue, prevValue) {
+        const el = document.getElementById(elementId);
+        if (prevValue === null || newValue === prevValue) {
+            el.style.color = 'var(--text-color)';
+        } else if (newValue > prevValue) {
+            el.style.color = 'var(--up-color)';
+        } else {
+            el.style.color = 'var(--down-color)';
+        }
+    }
+
+    async function fetchWeather(lat, lon) {
+        try {
+            const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min&timezone=auto`);
+            const data = await response.json();
+
+            const currentTemp = data.current.temperature_2m;
+            const humidity = data.current.relative_humidity_2m;
+            const code = data.current.weather_code;
+            const maxTemp = data.daily.temperature_2m_max[0];
+            const minTemp = data.daily.temperature_2m_min[0];
+            const pressure = data.current.surface_pressure;
+            const windSpeed = data.current.wind_speed_10m;
+            const windDir = data.current.wind_direction_10m;
+
+            applyValueStyle('weatherTemp', currentTemp, prevWeather.temp);
+            applyValueStyle('tempMin', minTemp, prevWeather.min);
+            applyValueStyle('tempMax', maxTemp, prevWeather.max);
+            applyValueStyle('humidityVal', humidity, prevWeather.hum);
+            applyValueStyle('windSpeedVal', windSpeed, prevWeather.windSpd);
+            applyValueStyle('pressure', pressure, prevWeather.press);
+
+            document.getElementById('weatherTemp').innerText = currentTemp.toFixed(1);
+            document.getElementById('weatherIcon').innerText = getWeatherPictogram(code);
+            document.getElementById('tempMin').innerText = minTemp.toFixed(1);
+            document.getElementById('tempMax').innerText = maxTemp.toFixed(1);
+            document.getElementById('pressure').innerText = pressure;
+            document.getElementById('windSpeedVal').innerText = windSpeed.toFixed(1);
+            document.getElementById('windDirVal').innerText = getWindDirection(windDir);
+            document.getElementById('humidityVal').innerText = humidity;
+
+            prevWeather = { temp: currentTemp, min: minTemp, max: maxTemp, hum: humidity, windSpd: windSpeed, windDir: windDir, press: pressure };
+
+            if (!isWeatherInitialSyncDone) {
+                updateEfficiencyByTemp(currentTemp);
+                isWeatherInitialSyncDone = true;
+            }
+        } catch (error) {
+            console.error("Weather update failed", error);
+        }
+    }
+
+    function updateEfficiencyByTemp(temp) {
+        let valueToSelect = "1.0";
+        if (temp < 0) {
+            valueToSelect = "0.55";
+        } else if (temp >= 0 && temp < 10) {
+            valueToSelect = "0.70";
+        } else if (temp >= 10 && temp < 20) {
+            valueToSelect = "0.85";
+        } else {
+            valueToSelect = "1.0";
+        }
+
+        const buttons = document.querySelectorAll('#tempEfficiencyGroup .segment');
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-value') === valueToSelect) {
+                btn.classList.add('active');
+                document.getElementById('tempEfficiency').value = valueToSelect;
+            }
+        });
+    }
+
+    function getWeatherPictogram(code) {
+        const mapping = {
+            0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+            45: "🌫️", 48: "🌫️",
+            51: "🌦️", 53: "🌦️", 55: "🌦️", 56: "❄️💧", 57: "❄️💧",
+            61: "🌧️", 63: "🌧️", 65: "🌧️", 66: "❄️🌧️", 67: "❄️🌧️",
+            71: "❄️", 73: "❄️", 75: "❄️", 77: "❄️",
+            80: "🌦️", 81: "🌦️", 82: "🌧️",
+            85: "🌨️", 86: "🌨️",
+            95: "⛈️", 96: "⛈️⚡", 99: "⛈️⚡"
+        };
+        return mapping[code] || "🌡️";
+    }
+
+    function getWindDirection(degree) {
+        const directions = ['↑↑↑ N', '↗↗↗ NE', '→→→ E', '↘↘↘ SE', '↓↓↓ S', '↙↙↙ SW', '←←← W', '↖↖↖ NW'];
+        return directions[Math.round(degree / 45) % 8];
+    }
+
+    function toggleModal(show) { document.getElementById('infoModal').style.display = show ? 'block' : 'none'; }
+
+    function toggleTheme() {
+        currentTheme = (currentTheme === 'light') ? 'dark' : 'light';
+        document.body.setAttribute('data-theme', currentTheme === 'dark' ? 'dark' : '');
+        document.getElementById('themeBtn').innerText = currentTheme === 'dark' ? '☀️' : '🌙';
+        updateChartTheme();
+    }
+
+    function setupMap() {
+        map = L.map('map');
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+        pathLine = L.polyline([], { color: '#e21017', weight: 5 }).addTo(map);
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const { latitude, longitude } = pos.coords;
+                map.setView([latitude, longitude], 15);
+                fetchWeather(latitude, longitude);
+            }, () => map.setView([41.8919, 12.5113], 13), { enableHighAccuracy: true });
+        } else {
+            map.setView([41.8919, 12.5113], 13);
+        }
+    }
+
+    function getChartFont() { return "'JetBrains Mono', monospace"; }
+
+    function setupCharts() {
+        const isDark = currentTheme === 'dark';
+        const tickColor = isDark ? '#4a5568' : '#8892a0';
+        const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)';
+
+        const commonOptions = {
+            responsive: true, maintainAspectRatio: false,
+            animation: false,
+            scales: {
+                x: {
+                    type: 'linear', display: true,
+                    title: { display: true, text: 'Distance (Km)', font: { size: 8, family: getChartFont() }, color: tickColor },
+                    ticks: { font: { size: 8, family: getChartFont() }, color: tickColor, maxTicksLimit: 6 },
+                    grid: { color: gridColor }, border: { color: gridColor }
+                },
+                y: {
+                    ticks: { font: { size: 8, family: getChartFont() }, color: tickColor, maxTicksLimit: 5 },
+                    grid: { color: gridColor }, border: { color: gridColor }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(10,14,20,0.92)',
+                    titleColor: '#e8edf2', bodyColor: '#8892a0',
+                    borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+                    titleFont: { family: getChartFont(), size: 10, weight: '700' },
+                    bodyFont: { family: getChartFont(), size: 9 },
+                    padding: 10, cornerRadius: 8
+                }
+            }
+        };
+
+        // Altitude chart
+        altChart = new Chart(document.getElementById('altitudeChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Altitude (m)',
+                    data: [],
+                    borderColor: '#ffd740', borderWidth: 2,
+                    backgroundColor: (ctx) => {
+                        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
+                        g.addColorStop(0, 'rgba(255,215,64,0.28)');
+                        g.addColorStop(1, 'rgba(255,215,64,0.0)');
+                        return g;
+                    },
+                    fill: true, pointRadius: 0, tension: 0.4
+                }]
+            },
+            options: JSON.parse(JSON.stringify(commonOptions))
+        });
+
+        // Consumption chart
+        consChart = new Chart(document.getElementById('consumptionChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Consumption (Wh/Km)',
+                    data: [],
+                    borderColor: '#ff1744', borderWidth: 2,
+                    backgroundColor: (ctx) => {
+                        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
+                        g.addColorStop(0, 'rgba(255,23,68,0.25)');
+                        g.addColorStop(1, 'rgba(255,23,68,0.0)');
+                        return g;
+                    },
+                    fill: true, pointRadius: 0, tension: 0.4
+                }]
+            },
+            options: JSON.parse(JSON.stringify(commonOptions))
+        });
+
+        // Speed profile chart
+        speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Speed (Km/h)',
+                    data: [],
+                    borderColor: '#b39ddb', borderWidth: 2,
+                    backgroundColor: (ctx) => {
+                        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
+                        g.addColorStop(0, 'rgba(179,157,219,0.28)');
+                        g.addColorStop(1, 'rgba(179,157,219,0.0)');
+                        return g;
+                    },
+                    fill: true, pointRadius: 0, tension: 0.3
+                }]
+            },
+            options: JSON.parse(JSON.stringify(commonOptions))
+        });
+
+        // Energy balance horizontal bar chart
+        energyChart = new Chart(document.getElementById('energyBalanceChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Consumed', 'Recovered'],
+                datasets: [
+                    {
+                        label: 'Energy (Wh)',
+                        data: [0, 0],
+                        backgroundColor: [
+                            (ctx) => {
+                                const g = ctx.chart.ctx.createLinearGradient(ctx.chart.width, 0, 0, 0);
+                                g.addColorStop(0, 'rgba(255,23,68,0.95)');
+                                g.addColorStop(1, 'rgba(200,0,40,0.7)');
+                                return g;
+                            },
+                            (ctx) => {
+                                const g = ctx.chart.ctx.createLinearGradient(ctx.chart.width, 0, 0, 0);
+                                g.addColorStop(0, 'rgba(0,230,118,0.95)');
+                                g.addColorStop(1, 'rgba(0,180,90,0.7)');
+                                return g;
+                            }
+                        ],
+                        borderColor: ['#ff1744', '#00e676'],
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        borderSkipped: false
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true, maintainAspectRatio: false,
+                animation: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(10,14,20,0.92)',
+                        titleColor: '#e8edf2', bodyColor: '#8892a0',
+                        borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+                        titleFont: { family: getChartFont(), size: 10, weight: '700' },
+                        bodyFont: { family: getChartFont(), size: 9 },
+                        padding: 10, cornerRadius: 8,
+                        callbacks: {
+                            label: function(ctx) {
+                                return ' ' + ctx.parsed.x.toFixed(1) + ' Wh';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { font: { size: 8, family: getChartFont() }, color: tickColor, maxTicksLimit: 5 },
+                        grid: { color: gridColor }, border: { color: gridColor },
+                        title: { display: true, text: 'Wh', font: { size: 8, family: getChartFont() }, color: tickColor }
+                    },
+                    y: {
+                        ticks: {
+                            font: { size: 9, family: getChartFont(), weight: '700' },
+                            color: tickColor
+                        },
+                        grid: { display: false },
+                        border: { color: gridColor }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateChartTheme() {
+        const isDark = currentTheme === 'dark';
+        const tickColor = isDark ? '#4a5568' : '#8892a0';
+        const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)';
+
+        [altChart, consChart, speedChart].forEach(chart => {
+            if (!chart) return;
+            chart.options.scales.y.ticks.color = tickColor;
+            chart.options.scales.x.ticks.color = tickColor;
+            chart.options.scales.y.grid.color = gridColor;
+            chart.options.scales.x.grid.color = gridColor;
+            chart.options.scales.y.border.color = gridColor;
+            chart.options.scales.x.border.color = gridColor;
+            if (chart.options.scales.x.title) chart.options.scales.x.title.color = tickColor;
+            chart.update();
+        });
+
+        if (energyChart) {
+            energyChart.options.scales.x.ticks.color = tickColor;
+            energyChart.options.scales.y.ticks.color = tickColor;
+            energyChart.options.scales.x.grid.color = gridColor;
+            energyChart.options.scales.x.border.color = gridColor;
+            energyChart.options.scales.y.border.color = gridColor;
+            if (energyChart.options.scales.x.title) energyChart.options.scales.x.title.color = tickColor;
+            energyChart.update();
+        }
+    }
+
+    function startTracking() {
+        document.getElementById('btnStart').disabled = true;
+        document.getElementById('btnStart').classList.add('active');
+        document.getElementById('btnStop').disabled = false;
+        startTime = Date.now();
+        tripSeconds = 0;
+        initialSoc = Math.min(100, Math.max(0, parseInt(document.getElementById('socInput').value) || 100));
+
+        // Trip timer
+        tripTimer = setInterval(() => {
+            tripSeconds++;
+            const h = String(Math.floor(tripSeconds / 3600)).padStart(2, '0');
+            const m = String(Math.floor((tripSeconds % 3600) / 60)).padStart(2, '0');
+            const s = String(tripSeconds % 60).padStart(2, '0');
+            document.getElementById('tripTimeDisplay').innerText = `${h}:${m}:${s}`;
+        }, 1000);
+
+        const intervalMs = parseInt(document.getElementById('gpsPolling').value) * 1000;
+        pollInterval = setInterval(() => {
+            navigator.geolocation.getCurrentPosition(updateLocation, null, { enableHighAccuracy: true });
+        }, intervalMs);
+    }
+
+    function stopTracking() {
+        if (pollInterval) clearInterval(pollInterval);
+        if (tripTimer) clearInterval(tripTimer);
+        document.getElementById('btnStart').disabled = false;
+        document.getElementById('btnStart').classList.remove('active');
+        document.getElementById('btnStop').disabled = true;
+    }
+
+    function updateLocation(pos) {
+        const { latitude, longitude, altitude, speed } = pos.coords;
+        const currentAlt = altitude || 0;
+
+        if (lastPoint) {
+            const step = computeDistance(lastPoint.lat, lastPoint.lon, latitude, longitude);
+            if (step > 5) {
+                totalDistance += step;
+                const deltaAlt = currentAlt - lastPoint.alt;
+                const grade = (deltaAlt / step) * 100;
+                const elapsed = (Date.now() - startTime) / 3600000;
+                const avgSpeed = (totalDistance / 1000) / elapsed;
+
+                // Compute speed: use GPS speed if available, else derive from distance/time
+                const intervalMs = parseInt(document.getElementById('gpsPolling').value) * 1000;
+                const segSpeedMs = speed || (step / (intervalMs / 1000));
+                lastSpeedKmh = segSpeedMs * 3.6;
+
+                const instantCons = calculatePhysics(step, deltaAlt, lastSpeedKmh);
+
+                refreshUI(totalDistance, currentAlt, grade, instantCons, avgSpeed, lastSpeedKmh);
+                pathLine.addLatLng([latitude, longitude]);
+                map.panTo([latitude, longitude]);
+                updateCharts(totalDistance, currentAlt, instantCons, lastSpeedKmh);
+                updatePowerBreakdown(step, deltaAlt, lastSpeedKmh);
+                computeRangeEstimate();
+                updateBatterySoC();
+
+                if (Math.floor(totalDistance / 2000) > Math.floor((totalDistance - step) / 2000)) {
+                    fetchWeather(latitude, longitude);
+                }
+            }
+        }
+        lastPoint = { lat: latitude, lon: longitude, alt: currentAlt };
+    }
+
+    function updateBatterySoC() {
+        const cap = parseFloat(document.getElementById('batteryCapacity').value) || 100;
+        const netWh = totalConsumedWh - totalRegenWh;
+        const newSoc = Math.min(100, Math.max(0, initialSoc - (netWh / (cap * 1000)) * 100));
+        document.getElementById('socInput').value = Math.round(newSoc);
+        updateBattery();
+    }
+
+    function calculatePhysics(distanceM, deltaAltM, speedKmh) {
+        const weight = parseFloat(document.getElementById('vehicleWeight').value);
+        const efficiency = parseFloat(document.getElementById('tempEfficiency').value);
+        const wind = parseFloat(document.getElementById('windSpeed').value);
+        const distKm = distanceM / 1000;
+
+        const baseResistance = (120 + (wind * 0.8) + (weight * 0.012)) / efficiency;
+        const potentialEnergyWh = (weight * 9.81 * deltaAltM) / 3600;
+        let stepWh = (baseResistance * distKm) + potentialEnergyWh;
+
+        const intervalSec = parseInt(document.getElementById('gpsPolling').value);
+        lastInstantPowerW = (stepWh / (intervalSec / 3600));
+
+        if (stepWh < 0) {
+            totalRegenWh += Math.abs(stepWh) * 0.7;
+            stepWh = 0;
+        } else {
+            totalConsumedWh += stepWh;
+        }
+        return Math.round(stepWh / distKm);
+    }
+
+    function computeDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    function refreshUI(dist, alt, grade, cons, avgSpeed, speedKmh) {
+        document.getElementById('distDisplay').innerText = (dist / 1000).toFixed(2) + " Km";
+        document.getElementById('avgSpeedDisplay').innerText = avgSpeed.toFixed(1) + " Km/h";
+        document.getElementById('altDisplay').innerText = alt.toFixed(0) + " m";
+        document.getElementById('gradeDisplay').innerText = grade.toFixed(1) + "%";
+        document.getElementById('consDisplay').innerText = cons + " Wh/Km";
+        document.getElementById('regenDisplay').innerText = totalRegenWh.toFixed(1) + " Wh";
+        document.getElementById('powerDisplay').innerText = Math.abs(lastInstantPowerW).toFixed(0) + " W";
+    }
+
+    function updateCharts(dist, alt, cons, speedKmh) {
+        const distKm = parseFloat((dist / 1000).toFixed(3));
+
+        altChart.data.datasets[0].data.push({ x: distKm, y: alt });
+        consChart.data.datasets[0].data.push({ x: distKm, y: cons });
+        speedChart.data.datasets[0].data.push({ x: distKm, y: parseFloat(speedKmh.toFixed(1)) });
+
+        // Update horizontal bar chart: two separate bars per row label
+        energyChart.data.datasets[0].data = [totalConsumedWh, totalRegenWh];
+
+        [altChart, consChart, speedChart, energyChart].forEach(c => c.update('none'));
+
+        document.getElementById('energyConsumedLabel').innerText = totalConsumedWh.toFixed(1) + ' Wh';
+        document.getElementById('energyRegenLabel').innerText = totalRegenWh.toFixed(1) + ' Wh';
+
+        const regenEff = totalConsumedWh > 0 ? ((totalRegenWh / totalConsumedWh) * 100).toFixed(1) : '--';
+        document.getElementById('regenEffLabel').innerText = regenEff + (regenEff !== '--' ? '%' : '');
+    }
+
+    function updatePowerBreakdown(stepM, deltaAltM, speedKmh) {
+        const weight = parseFloat(document.getElementById('vehicleWeight').value);
+        const wind = parseFloat(document.getElementById('windSpeed').value);
+        const efficiency = parseFloat(document.getElementById('tempEfficiency').value);
+        const intervalSec = parseInt(document.getElementById('gpsPolling').value);
+        const distKm = stepM / 1000;
+
+        // Rolling resistance power (W)
+        const rollingWh = (weight * 0.012 * distKm) / efficiency;
+        const rollingW = rollingWh / (intervalSec / 3600);
+
+        // Gravity power (W)
+        const gravWh = (weight * 9.81 * Math.max(0, deltaAltM)) / 3600;
+        const gravW = gravWh / (intervalSec / 3600);
+
+        // Aero/wind power (W)
+        const aeroWh = (wind * 0.8 * distKm) / efficiency;
+        const aeroW = aeroWh / (intervalSec / 3600);
+
+        // Regen power (W) – when going downhill
+        const regenInstantW = deltaAltM < 0 ? Math.abs((weight * 9.81 * deltaAltM) / 3600 * 0.7) / (intervalSec / 3600) : 0;
+
+        const maxW = Math.max(rollingW, gravW, aeroW, regenInstantW, 100);
+
+        document.getElementById('dragBar').style.width = Math.min(100, (rollingW / maxW) * 100) + '%';
+        document.getElementById('gravBar').style.width = Math.min(100, (gravW / maxW) * 100) + '%';
+        document.getElementById('windBar').style.width = Math.min(100, (aeroW / maxW) * 100) + '%';
+        document.getElementById('regenBar').style.width = Math.min(100, (regenInstantW / maxW) * 100) + '%';
+
+        document.getElementById('dragVal').innerText = Math.round(rollingW) + ' W';
+        document.getElementById('gravVal').innerText = Math.round(gravW) + ' W';
+        document.getElementById('windVal').innerText = Math.round(aeroW) + ' W';
+        document.getElementById('regenBarVal').innerText = Math.round(regenInstantW) + ' W';
+    }
+
+    function showSummary() {
+        const modal = document.getElementById('summaryModal');
+        const content = document.getElementById('summaryContent');
+
+        if (totalDistance < 10) {
+            content.innerHTML = '<p style="color:var(--label-color); font-style:italic;">No trip data yet. Start a trip to see the summary.</p>';
+            modal.style.display = 'block';
+            return;
+        }
+
+        const distKm = (totalDistance / 1000).toFixed(2);
+        const avgConsWh_km = totalConsumedWh > 0 ? (totalConsumedWh / (totalDistance / 1000)).toFixed(1) : 0;
+        const regenEff = totalConsumedWh > 0 ? ((totalRegenWh / totalConsumedWh) * 100).toFixed(1) : 0;
+        const h = String(Math.floor(tripSeconds / 3600)).padStart(2, '0');
+        const m = String(Math.floor((tripSeconds % 3600) / 60)).padStart(2, '0');
+        const s = String(tripSeconds % 60).padStart(2, '0');
+        const tripTime = `${h}:${m}:${s}`;
+
+        // Efficiency score
+        let scoreBadge = '';
+        const avgCons = parseFloat(avgConsWh_km);
+        if (avgCons < 150) {
+            scoreBadge = '<span class="score-badge excellent">🏆 Excellent Efficiency</span>';
+        } else if (avgCons < 220) {
+            scoreBadge = '<span class="score-badge good">👍 Good Efficiency</span>';
+        } else {
+            scoreBadge = '<span class="score-badge poor">⚡ High Consumption</span>';
+        }
+
+        content.innerHTML = `
+            ${scoreBadge}
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-item-label">Total Trip Distance</div>
+                    <div class="summary-item-value" style="color:var(--secondary)">${distKm} Km</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Total Trip Duration</div>
+                    <div class="summary-item-value">${tripTime}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Average Energy Consumption</div>
+                    <div class="summary-item-value" style="color:var(--danger)">${avgConsWh_km} Wh/Km</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Total Energy Consumed</div>
+                    <div class="summary-item-value" style="color:var(--danger)">${(totalConsumedWh/1000).toFixed(1)} kWh</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Total Energy Recovered</div>
+                    <div class="summary-item-value" style="color:var(--primary)">${totalRegenWh.toFixed(1)} Wh</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Energy Regen Efficiency</div>
+                    <div class="summary-item-value" style="color:var(--primary)">${regenEff} %</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Total Net Energy</div>
+                    <div class="summary-item-value" style="color:var(--warning)">${((totalConsumedWh - totalRegenWh)/1000).toFixed(1)} kWh</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Total Data Points</div>
+                    <div class="summary-item-value" style="color:var(--accent-purple)">${altChart.data.datasets[0].data.length}</div>
+                </div>
+            </div>
+        `;
+        modal.style.display = 'block';
+    }
+</script>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            }, function(err) {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+    }
+</script>
+</body>
+</html>
