@@ -1,0 +1,21 @@
+{
+  "name": "Liken Master",
+  "short_name": "Liken Master",
+  "description": "Compare effective charging costs across stations, simulate battery dynamics, and know exactly when charging makes economic sense vs ICE",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
