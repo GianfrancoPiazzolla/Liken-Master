@@ -152,7 +152,7 @@ The **Graphs** tab contains four switchable chart views, all powered by **Chart.
 
 #### 4️⃣ Station Ranking Table
 - Switches from a canvas chart to a **sortable ranking table** view
-- Ranks all stations by effective charging cost (lowest = best) at min-SOC
+- Ranks all stations by effective charging cost (lowest = best)
 - Rank badge colors: teal (#1), blue (#2), orange (#3), others dimmed
 - Columns: Rank, Station Name, Effective Cost (€/kWh), vs ICE delta (€), Return SOC (%)
 - vs ICE delta is color-coded green/red inline
@@ -171,7 +171,7 @@ All chart views (except Ranking) display a **clickable legend** below the chart:
 The **Stats** tab provides a rich summary dashboard for the active BEV profile.
 
 #### 🔑 Key Metrics (top grid)
-- 🏆 **Best Station** — name of the cheapest effective-cost station at min-SOC
+- 🏆 **Best Station** — name of the cheapest effective-cost station
 - 💶 **Best Effective Cost** — lowest €/kWh from your stations (highlighted chip)
 - ⚡ **ICE Breakeven** — the threshold price, always visible for reference
 - 🛡️ **vs Breakeven** — how many €/kWh below the breakeven the best station sits
