@@ -126,7 +126,7 @@ The **Graphs** tab contains four switchable chart views, all powered by **Chart.
 > 💡 Charts only work when a **BEV** profile is active. Selecting an ICE profile shows a prompt.
 
 #### 1️⃣ Effective Cost Chart
-- **X-axis:** Battery level (% SOC) across the full min→max charge window, sampled at 80 steps
+- **X-axis:** Battery level (% SOC) across the full min→max charge window
 - **Y-axis:** Effective cost in €/kWh (0 – 1.5 range)
 - **Per-station curves** — one smooth line per station, color-coded
 - **ICE Breakeven line** — a horizontal dashed orange line showing the ceiling price
@@ -187,7 +187,7 @@ A visual bar chart comparing all stations:
   - 💵 **Weekly savings** in €
   - 📅 **Monthly savings** in €
   - 📆 **Yearly savings** in € (with a visual progress bar)
-  - **Annual Km** driven (dailyKm × 365), displayed for reference
+  - 🛣️ **Annual Km** driven (dailyKm × 365), displayed for reference
 - Uses the best station's savings-per-km vs the ICE reference cost
 
 > ⚠️ The savings section only renders when a BEV profile is active and at least one station beats the ICE breakeven price.
@@ -218,7 +218,7 @@ A visual bar chart comparing all stations:
 - Works in both directions (left = next tab, right = previous tab)
 - Swipe dot indicator shows current tab position
 
-#### 🪟 Modal System
+#### 📲 Modal System
 - Smooth sheet modals (slide up from bottom on mobile, scale-in on desktop ≥480px)
 - Backdrop blur overlay with 70% black dimming
 - Touch handle bar on mobile for visual affordance
@@ -268,16 +268,16 @@ The core mathematical model is what sets LikenMaster apart from simple price com
 effectiveCost(station, vehicle, soc%) =
     totalCost / netUsableEnergy
 
-  energyAvailable   = capacity × soc / 100                 [kWh in battery now]
-  energyToStation   = outwardKm / (Km/kWh)                  [kWh to drive there]
-  energyAtStation   = energyAvailable − energyToStation     [kWh left on arrival]
+  energyAvailable   = capacity × soc / 100                     [kWh in battery now]
+  energyToStation   = outwardKm / (Km/kWh)                     [kWh to drive there]
+  energyAtStation   = energyAvailable − energyToStation        [kWh left on arrival]
   maxCharge         = capacity × maxSOC/100 − energyAtStation  [kWh added at station]
-  totalEnergyPaid   = maxCharge + energyToStation           [kWh paid for including transit]
-  totalCost         = totalEnergyPaid × pricePerKwh         [€ spent]
-  returnEnergy      = returnKm / (Km/kWh)                   [kWh for return trip]
-  netUsableEnergy   = maxCharge − returnEnergy              [kWh that actually benefits you]
+  totalEnergyPaid   = maxCharge + energyToStation              [kWh paid for including transit]
+  totalCost         = totalEnergyPaid × pricePerKwh            [€ spent]
+  returnEnergy      = returnKm / (Km/kWh)                      [kWh for return trip]
+  netUsableEnergy   = maxCharge − returnEnergy                 [kWh that actually benefits you]
 
-  effectiveCost     = totalCost / netUsableEnergy           [€/kWh true cost]
+  effectiveCost     = totalCost / netUsableEnergy              [€/kWh true cost]
 ```
 
 > If `energyAtStation < 0` (can't reach station) or `netUsableEnergy ≤ 0` (charge used up entirely on return), the function returns `null` and the station is shown as unreachable.
