@@ -212,9 +212,9 @@ canvas{width:100%!important;height:100%!important}
 /* ===== RANKING TABLE ===== */
 .ranking-table{width:100%;border-collapse:separate;border-spacing:0 6px}
 .ranking-table th{font-size:.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;font-weight:700;padding:6px 12px;text-align:left;font-family:var(--font-display)}
-.ranking-row td{background:var(--surface);padding:12px;font-size:.82rem;font-family:var(--font-mono)}
-.ranking-row td:first-child{border-radius:10px 0 0 10px;padding-left:10px}
-.ranking-row td:last-child{border-radius:0 10px 10px 0;padding-right:10px}
+.ranking-row td{background:var(--surface);padding:10px;font-size:.82rem;font-family:var(--font-mono)}
+.ranking-row td:first-child{border-radius:10px 0 0 10px;padding-left:5px}
+.ranking-row td:last-child{border-radius:0 10px 10px 0;padding-right:5px}
 .rank-badge{width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0}
 
 /* ===== MODAL ===== */
@@ -790,15 +790,15 @@ function renderVehicleSection(){
     <div class="card">
       <div class="card-title"><div class="card-title-icon">🔋</div>Battery Pack</div>
       ${sliderField('capacity','Battery Capacity','kWh',10,200,0.5,ap.capacity,1)}
-      ${sliderField('minlevel','Min SOC Limit','%',0,90,0.5,ap.minlevel,1)}
-      ${sliderField('maxlevel','Max SOC Limit','%',0,100,0.5,ap.maxlevel,1)}
+      ${sliderField('minlevel','Min SoC Limit','%',0,90,1,ap.minlevel,0)}
+      ${sliderField('maxlevel','Max SoC Limit','%',0,100,1,ap.maxlevel,0)}
       <div class="info-grid" style="margin-top:16px">
         <div class="info-chip">
           <div class="info-chip-label">Usable Capacity</div>
           <div class="info-chip-val" id="chip-usable">—<span> kWh</span></div>
         </div>
         <div class="info-chip">
-          <div class="info-chip-label">SOC Window</div>
+          <div class="info-chip-label">SoC Window</div>
           <div class="info-chip-val" id="chip-window">—<span> %</span></div>
         </div>
       </div>
@@ -876,8 +876,8 @@ function updateVehicleChips(ap){
   const icekm = ap.icecost/ap.iceeff;
   const breakeven = icekm*ap.beveff;
   const el = id=>document.getElementById(id);
-  if(el('chip-icekm')) el('chip-icekm').innerHTML = icekm.toFixed(3)+'<span> €/Km</span>';
-  if(el('chip-break')) el('chip-break').innerHTML = breakeven.toFixed(3)+'<span> €/kWh</span>';
+  if(el('chip-icekm')) el('chip-icekm').innerHTML = icekm.toFixed(2)+'<span> €/Km</span>';
+  if(el('chip-break')) el('chip-break').innerHTML = breakeven.toFixed(2)+'<span> €/kWh</span>';
   if(isBEV){
     const usable = ap.capacity*(ap.maxlevel-ap.minlevel)/100;
     const range = usable*ap.beveff;
@@ -908,12 +908,12 @@ function renderStations(){
       const eff = calcEffectiveCost(st,ap,ap.minlevel);
       const breakeven = (ap.icecost/ap.iceeff)*ap.beveff;
       if(eff!==null){
-        summary.eff = eff.toFixed(3)+' €/kWh';
+        summary.eff = eff.toFixed(2)+' €/kWh';
         const diff = breakeven - eff;
         summary.saving = (diff>=0?'▼ ':'▲ ')+Math.abs(diff).toFixed(2)+' €';
       }
       const retSOC = calcReturnSOC(st,ap);
-      summary.retSOC = retSOC.toFixed(1)+'%';
+      summary.retSOC = retSOC.toFixed(0)+' %';
     }
     const card = document.createElement('div');
     card.className='station-card';
@@ -948,7 +948,7 @@ function renderStations(){
           </div>
         </div>
         <div class="st-sum-item">
-          <div class="st-sum-label">Return SOC</div>
+          <div class="st-sum-label">Return SoC</div>
           <div class="st-sum-val" id="ss-soc-${i}">${summary.retSOC}</div>
         </div>
       </div>`;
@@ -999,7 +999,7 @@ function updateStationSummary(i){
   const eff = calcEffectiveCost(st,ap,ap.minlevel);
   const breakeven = (ap.icecost/ap.iceeff)*ap.beveff;
   const el = id=>document.getElementById(id);
-  if(el(`ss-eff-${i}`)) el(`ss-eff-${i}`).textContent = eff!==null?eff.toFixed(3)+' €/kWh':'—';
+  if(el(`ss-eff-${i}`)) el(`ss-eff-${i}`).textContent = eff!==null?eff.toFixed(2)+' €/kWh':'—';
   if(el(`ss-sav-${i}`)&&eff!==null){
     const diff = breakeven-eff;
     el(`ss-sav-${i}`).textContent=(diff>=0?'▼ ':'▲ ')+Math.abs(diff).toFixed(2)+' €';
@@ -1152,9 +1152,9 @@ function updateChart(){
       }
     });
     buildChart(labels,datasets,gridColor,labelColor,{xLabel:'Battery Level (%)',yLabel:'Effective Cost (€/kWh)',yMin:0,yMax:1.5,tooltipFmt:(ctx)=>{
-      if(ctx.dataset.label==='ICE Breakeven') return `Breakeven: ${ctx.parsed.y.toFixed(3)} €/kWh`;
+      if(ctx.dataset.label==='ICE Breakeven') return `Breakeven: ${ctx.parsed.y.toFixed(2)} €/kWh`;
       if(ctx.dataset.label.startsWith('_')) return null;
-      return ctx.parsed.y!==null?`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(3)} €/kWh`:null;
+      return ctx.parsed.y!==null?`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} €/kWh`:null;
     }});
 
   } else if(activeChart==='savings'){
@@ -1279,7 +1279,7 @@ function buildChart(labels,datasets,gridColor,labelColor,opts){
         }
       },
       scales:{
-        x:{title:{display:true,text:opts.xLabel,color:labelColor,font:{family:'Outfit',size:10,weight:'600'}},ticks:{color:labelColor,maxTicksLimit:10,font:{family:'JetBrains Mono',size:9}},grid:{color:gridColor},border:{color:gridColor}},
+        x:{title:{display:true,text:opts.xLabel,color:labelColor,font:{family:'Outfit',size:10,weight:'600'}},ticks:{color:labelColor,maxTicksLimit:11,font:{family:'JetBrains Mono',size:9},callback:function(value,index){const lbl=this.getLabelForValue(value);const num=parseFloat(lbl);return Number.isInteger(num)?String(num):'';}},grid:{color:gridColor},border:{color:gridColor}},
         y:{title:{display:true,text:opts.yLabel,color:labelColor,font:{family:'Outfit',size:10,weight:'600'}},ticks:{color:labelColor,font:{family:'JetBrains Mono',size:9}},grid:{color:gridColor},border:{color:gridColor},...(opts.yMin!==null?{min:opts.yMin}:{}),...(opts.yMax!==null?{max:opts.yMax}:{})}
       }
     }
@@ -1328,10 +1328,11 @@ function renderRankingTable(ap){
     renderLegend([]);
     return;
   }
-  const midSOC=ap.minlevel;
+  const minSOC=ap.minlevel;
+  const maxSOC=ap.maxlevel;
   const breakeven=(ap.icecost/ap.iceeff)*ap.beveff;
   const ranked=state.stations.map((st,i)=>{
-    const eff=calcEffectiveCost(st,ap,midSOC);
+    const eff=calcEffectiveCost(st,ap,minSOC);
     const savings=calcSavingsPerKm(st,ap);
     const retSOC=calcReturnSOC(st,ap);
     return {st,i,eff,savings,retSOC,color:STATION_COLORS[i%STATION_COLORS.length]};
@@ -1343,7 +1344,7 @@ function renderRankingTable(ap){
     <table class="ranking-table" style="width:100%;border-collapse:separate;border-spacing:0 6px">
       <thead>
         <tr>
-          <th>#</th><th>Station</th><th>€/kWh</th><th>vs ICE</th><th>Ret.SOC</th>
+          <th>#</th><th>Station</th><th>€/kWh</th><th>vs ICE</th><th>R.SoC</th>
         </tr>
       </thead>
       <tbody>
@@ -1362,12 +1363,12 @@ function renderRankingTable(ap){
             </div></td>
             <td style="font-weight:700;color:${isGood?'var(--accent)':'var(--danger)'}">${r.eff.toFixed(2)}</td>
             <td><span class="badge ${isGood?'badge-green':'badge-red'}">${Math.abs(diff*100).toFixed(2)}&nbsp;€&nbsp;${isGood?'▼':'▲'}</span></td>
-            <td style="color:${r.retSOC>20?'var(--accent)':'var(--danger)'}">${r.retSOC.toFixed(1)}%</td>
+            <td style="color:${r.retSOC>20?'var(--accent)':'var(--danger)'}">${r.retSOC.toFixed(0)} %</td>
           </tr>`;
         }).join('')}
       </tbody>
     </table>
-    <div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated at min-SOC (${midSOC.toFixed(0)} %). Lower €/kWh = better. ▼ = cheaper than ICE.</div>
+    <div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging a ${maxSOC-minSOC}% SoC window.</br>Lower €/kWh = better. ▼ = cheaper than ICE.</div>
   `;
 }
 
@@ -1382,14 +1383,15 @@ function updateStats(){
     return;
   }
   const isBEV=ap.type==='BEV';
-  const midSOC=ap.minlevel;
+  const minSOC=ap.minlevel;
+  const maxSOC=ap.maxlevel;
   const breakeven=(ap.icecost/ap.iceeff)*ap.beveff;
   const iceCostKm=ap.icecost/ap.iceeff;
 
   let bestStation=null, bestCost=Infinity, worstStation=null, worstCost=-Infinity;
   if(isBEV){
     state.stations.forEach(st=>{
-      const eff=calcEffectiveCost(st,ap,midSOC);
+      const eff=calcEffectiveCost(st,ap,minSOC);
       if(eff!==null){
         if(eff<bestCost){bestCost=eff;bestStation=st;}
         if(eff>worstCost){worstCost=eff;worstStation=st;}
@@ -1432,9 +1434,9 @@ function updateStats(){
     <div class="card">
       <div class="card-title"><div class="card-title-icon">🏆</div>Station Performance</div>
       <div class="eff-meter">`;
-    const maxEff=Math.max(...state.stations.map(st=>calcEffectiveCost(st,ap,midSOC)||0));
+    const maxEff=Math.max(...state.stations.map(st=>calcEffectiveCost(st,ap,minSOC)||0));
     state.stations.forEach((st,i)=>{
-      const eff=calcEffectiveCost(st,ap,midSOC);
+      const eff=calcEffectiveCost(st,ap,minSOC);
       const sav=calcSavingsPerKm(st,ap);
       const color=STATION_COLORS[i%STATION_COLORS.length];
       const isGood=eff!==null&&eff<breakeven;
@@ -1447,7 +1449,7 @@ function updateStats(){
           <div class="eff-val" style="color:${isGood?'var(--accent)':'var(--danger)'}">${eff!==null?eff.toFixed(2)+' €/kWh':'—'}</div>
         </div>`;
     });
-    html+=`<div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated at min-SOC (${midSOC.toFixed(0)} %).</div></div></div>`;
+    html+=`<div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging a ${maxSOC-minSOC}% SoC window.</div></div></div>`;
 
     if(bestStation){
       html+=`
@@ -1483,7 +1485,7 @@ function updateStats(){
         <div class="stats-grid" id="savings-values">
           ${savingsValuesHTML(yearlySaving)}
         </div>
-        <div style="font-size:.7rem;color:var(--text-dim);margin-top:8px">* Estimated vs best ICE reference, using best station · <span id="savings-yearly-km">${(state.dailyKm*365).toLocaleString()}</span> Km/year</div>
+        <div style="font-size:.7rem;color:var(--text-dim);margin-top:8px">* Estimated using best station vs best ICE reference.</div>
       </div>`;
     }
   }
@@ -1518,18 +1520,18 @@ function savingsValuesHTML(yearlySaving){
 function recomputeSavings(){
   const ap = activeProfile();
   if(!ap || ap.type!=='BEV') return;
-  const midSOC = (ap.minlevel + ap.maxlevel) / 2;
+  const minSOC = ap.minlevel;
   const breakeven = (ap.icecost / ap.iceeff) * ap.beveff;
   let bestStation = null, bestCost = Infinity;
   state.stations.forEach(st=>{
-    const eff = calcEffectiveCost(st, ap, midSOC);
+    const eff = calcEffectiveCost(st, ap, minSOC);
     if(eff !== null && eff < bestCost){ bestCost = eff; bestStation = st; }
   });
   if(!bestStation || bestCost >= breakeven) return;
   const savCentsKm = calcSavingsPerKm(bestStation, ap);
   if(savCentsKm === null || savCentsKm <= 0) return;
   const yearlySaving = savCentsKm * (state.dailyKm * 365);
-  // Patch just the values without re-rendering the whole section
+
   const sv = document.getElementById('savings-values');
   if(sv) sv.innerHTML = savingsValuesHTML(yearlySaving);
   const yk = document.getElementById('savings-yearly-km');
