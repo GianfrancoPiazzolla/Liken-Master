@@ -1140,8 +1140,8 @@ function updateChart(){
       });
       datasets.unshift({label:'_fill',data:minCurve,borderColor:'transparent',backgroundColor:'rgba(0,245,196,0.08)',fill:{target:'origin',above:'rgba(0,245,196,0.07)'},pointRadius:0,tension:0.4,spanGaps:false});
     }
-    datasets.push({label:'ICE Breakeven',data:labels.map(()=>breakeven),borderColor:'#ff9f5b',backgroundColor:'transparent',borderWidth:2,borderDash:[8,4],pointRadius:0});
-    legendItems.push({color:'#ff9f5b',label:'ICE Breakeven',type:'dash'});
+    datasets.push({label:'ICE Breakeven',data:labels.map(()=>breakeven),borderColor:'#a6a6a6',backgroundColor:'transparent',borderWidth:2,borderDash:[8,4],pointRadius:0});
+    legendItems.push({color:'#a6a6a6',label:'ICE Breakeven',type:'dash'});
     state.stations.forEach((st,si)=>{
       const color=STATION_COLORS[si%STATION_COLORS.length];
       const retSOC=calcReturnSOC(st,ap);
@@ -1363,7 +1363,7 @@ function renderRankingTable(ap){
             </div></td>
             <td style="font-weight:700;color:${isGood?'var(--accent)':'var(--danger)'}">${r.eff.toFixed(2)}</td>
             <td><span class="badge ${isGood?'badge-green':'badge-red'}">${Math.abs(diff*100).toFixed(2)}&nbsp;€&nbsp;${isGood?'▼':'▲'}</span></td>
-            <td style="color:${r.retSOC>20?'var(--accent)':'var(--danger)'}">${r.retSOC.toFixed(0)} %</td>
+            <td style="font-weight:700;color:${r.retSOC>20?'var(--accent)':'var(--danger)'}">${r.retSOC.toFixed(0)}%</td>
           </tr>`;
         }).join('')}
       </tbody>
