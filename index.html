@@ -790,8 +790,8 @@ function renderVehicleSection(){
     <div class="card">
       <div class="card-title"><div class="card-title-icon">🔋</div>Battery Pack</div>
       ${sliderField('capacity','Battery Capacity','kWh',10,200,0.5,ap.capacity,1)}
-      ${sliderField('minlevel','Min SoC Limit','%',0,90,1,ap.minlevel,0)}
-      ${sliderField('maxlevel','Max SoC Limit','%',0,100,1,ap.maxlevel,0)}
+      ${sliderField('minlevel','Min SoC Limit','%',5,99,1,ap.minlevel,0)}
+      ${sliderField('maxlevel','Max SoC Limit','%',6,100,1,ap.maxlevel,0)}
       <div class="info-grid" style="margin-top:16px">
         <div class="info-chip">
           <div class="info-chip-label">Usable Capacity</div>
@@ -841,6 +841,25 @@ function renderVehicleSection(){
       const f = sl.dataset.field;
       const dec = parseInt(sl.dataset.dec);
       ap[f] = parseFloat(sl.value);
+
+      // Enforce Max SoC Limit >= Min SoC Limit
+      if(f === 'minlevel'){
+        if(ap.minlevel >= ap.maxlevel){
+          ap.maxlevel = ap.minlevel + 1;
+          const maxSl = container.querySelector('input[data-field="maxlevel"]');
+          if(maxSl){
+            maxSl.value = ap.maxlevel;
+            document.getElementById('vv-maxlevel').textContent = ap.maxlevel.toFixed(parseInt(maxSl.dataset.dec));
+            updateSliderFill(maxSl);
+          }
+        }
+      } else if(f === 'maxlevel'){
+        if(ap.maxlevel <= ap.minlevel){
+          ap.maxlevel = ap.minlevel + 1;
+          sl.value = ap.maxlevel;
+        }
+      }
+
       document.getElementById('vv-'+f).textContent = parseFloat(sl.value).toFixed(dec);
       updateSliderFill(sl);
       updateVehicleChips(ap);
@@ -1300,7 +1319,7 @@ function renderLegend(items){
       ${isHidden?`<span style="font-size:.58rem;opacity:.6;margin-left:2px">●</span>`:''}
     </div>`;
   }).join('')+
-  `<div class="legend-hint">Tap a label to show/hide its curve</div>`;
+  `<div class="legend-hint">Tap a label to show/hide its curve</br>▲ = Return SoC.</div>`;
 
   leg.querySelectorAll('.legend-item[data-label]').forEach(el=>{
     el.addEventListener('click',()=>{
@@ -1329,7 +1348,6 @@ function renderRankingTable(ap){
     return;
   }
   const minSOC=ap.minlevel;
-  const maxSOC=ap.maxlevel;
   const breakeven=(ap.icecost/ap.iceeff)*ap.beveff;
   const ranked=state.stations.map((st,i)=>{
     const eff=calcEffectiveCost(st,ap,minSOC);
@@ -1368,7 +1386,7 @@ function renderRankingTable(ap){
         }).join('')}
       </tbody>
     </table>
-    <div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging a ${maxSOC-minSOC}% SoC window.</br>Lower €/kWh = better. ▼ = cheaper than ICE.</div>
+    <div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging a full SoC window.</br>Lower €/kWh = better. ▼ = cheaper than ICE.</div>
   `;
 }
 
@@ -1384,7 +1402,6 @@ function updateStats(){
   }
   const isBEV=ap.type==='BEV';
   const minSOC=ap.minlevel;
-  const maxSOC=ap.maxlevel;
   const breakeven=(ap.icecost/ap.iceeff)*ap.beveff;
   const iceCostKm=ap.icecost/ap.iceeff;
 
@@ -1449,9 +1466,10 @@ function updateStats(){
           <div class="eff-val" style="color:${isGood?'var(--accent)':'var(--danger)'}">${eff!==null?eff.toFixed(2)+' €/kWh':'—'}</div>
         </div>`;
     });
-    html+=`<div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging a ${maxSOC-minSOC}% SoC window.</div></div></div>`;
+    html+=`<div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging a full SoC window.</div></div></div>`;
 
     if(bestStation){
+      const retSOC = calcReturnSOC(bestStation,ap);
       html+=`
       <div class="card" style="border-color:var(--accent)">
         <div class="card-title"><div class="card-title-icon">⭐</div>Best Deal</div>
@@ -1459,7 +1477,7 @@ function updateStats(){
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <span class="badge badge-green">${bestCost.toFixed(2)} €/kWh</span>
           ${bestCost<breakeven?`<span class="badge badge-green">▼ Beats ICE by ${(breakeven-bestCost).toFixed(2)} €/kWh</span>`:'<span class="badge badge-red">▲ Above breakeven</span>'}
-          <span class="badge badge-blue">${Math.round(bestStation.outward*2)} Km R.T.</span>
+          <span class="badge badge-blue">${retSOC.toFixed(0)}% Return SoC</span>
         </div>
       </div>`;
     }
