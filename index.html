@@ -942,6 +942,14 @@ function renderStations(){
         <div class="station-color" style="background:${color}"></div>
         <input class="station-name-input" type="text" placeholder="" value="${esc(st.name)}" data-idx="${i}">
         <div class="station-actions">
+          <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+            <button class="icon-btn" title="Move up" onclick="moveStation(${i},-1)" ${i===0?'disabled style="opacity:.25;cursor:default"':''} style="width:26px;height:26px;border-radius:6px">
+              <svg viewBox="0 0 24 24" width="12" height="12"><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+            <button class="icon-btn" title="Move down" onclick="moveStation(${i},1)" ${i===state.stations.length-1?'disabled style="opacity:.25;cursor:default"':''} style="width:26px;height:26px;border-radius:6px">
+              <svg viewBox="0 0 24 24" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </div>
           <button class="icon-btn dup" title="Duplicate" onclick="duplicateStation(${i})">
             <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
           </button>
@@ -1049,6 +1057,15 @@ function duplicateStation(i){
   state.stations.splice(i+1,0,st);
   saveState(); renderStations(); updateChart(); updateStats();
   showToast('Station duplicated','📋');
+}
+
+function moveStation(i, direction){
+  const newIdx = i + direction;
+  if(newIdx<0 || newIdx>=state.stations.length) return;
+  const arr = [...state.stations];
+  [arr[i], arr[newIdx]] = [arr[newIdx], arr[i]];
+  state.stations = arr;
+  saveState(); renderStations(); updateChart(); updateStats();
 }
 
 // ============================================================
@@ -1474,9 +1491,9 @@ function updateStats(){
       <div class="card" style="border-color:var(--accent)">
         <div class="card-title"><div class="card-title-icon">⭐</div>Best Deal</div>
         <div style="font-family:var(--font-display);font-weight:800;font-size:1.1rem;margin-bottom:8px">${esc(bestStation.name)}</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <span class="badge badge-green">${bestCost.toFixed(2)} €/kWh</span>
-          ${bestCost<breakeven?`<span class="badge badge-green">▼ Beats ICE by ${(breakeven-bestCost).toFixed(2)} €/kWh</span>`:'<span class="badge badge-red">▲ Above breakeven</span>'}
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="badge badge-orange">${bestCost.toFixed(2)} €/kWh</span>
+          ${bestCost<breakeven?`<span class="badge badge-green">▼ -${(breakeven-bestCost).toFixed(2)} €/kWh vs ICE</span>`:`<span class="badge badge-red">▲ +${(bestCost-breakeven).toFixed(2)} €/kWh vs ICE</span>`}
           <span class="badge badge-blue">${retSOC.toFixed(0)}% Return SoC</span>
         </div>
       </div>`;
@@ -1503,7 +1520,7 @@ function updateStats(){
         <div class="stats-grid" id="savings-values">
           ${savingsValuesHTML(yearlySaving)}
         </div>
-        <div style="font-size:.7rem;color:var(--text-dim);margin-top:8px">* Estimated using best station vs best ICE reference.</div>
+        <div style="font-size:.7rem;color:var(--text-dim);margin-top:8px">* Estimated using best station vs ICE reference.</div>
       </div>`;
     }
   }
