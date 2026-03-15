@@ -89,6 +89,12 @@ LikenMaster supports multiple vehicle profiles so you can compare different cars
 
 > All sliders show a **live fill gradient** (blue → teal) and update all derived values and charts in real time as you drag.
 
+#### 📝 Profile Notes
+Each EV profile includes a free-text **Notes** field displayed in a dedicated card at the bottom of the Vehicle tab.
+- A multi-line `<textarea>` (3 rows) lets you annotate each profile with any personal remarks — e.g. battery degradation observations, charging habits, or vehicle-specific reminders
+- Notes are saved in real time on every keystroke via the `input` event listener, persisting to `localStorage` as part of the profile object (`ap.notes`)
+- The field is intentionally unstyled / placeholder-free to keep the UI clean; it inherits the app's font and color tokens and highlights with the teal accent on focus
+
 ---
 
 ### ⚡ Charging Stations
@@ -116,6 +122,11 @@ Each station card shows a live 3-column summary row:
 - **Effective Cost** — true net €/kWh accounting for energy consumed in transit (see [Physics](#-physics--calculation-engine))
 - **vs ICE** — difference vs breakeven in €, colored 🟢 green (cheaper than ICE) or 🔴 red (more expensive)
 - **Return SOC** — estimated battery state-of-charge upon arriving home after charging and driving back
+
+#### 📝 Station Notes
+Each station card includes a free-text **Notes** field rendered below the summary footer.
+- A compact multi-line `<textarea>` (2 rows) lets you annotate each station with custom remarks — e.g. connector type, parking instructions, access restrictions, or pricing quirks
+- Notes are bound per-station via `data-idx` attribute and saved in real time on every keystroke, persisting to `localStorage` as part of the station object (`st.notes`)
 
 ---
 
@@ -242,8 +253,8 @@ A visual bar chart comparing all stations:
 
 #### 🗃️ Local State (`localStorage`)
 All application state is serialized to `localStorage` under a single key (`likenmaster_state`), including:
-- All profiles (id, name, type, color, all numeric parameters)
-- All stations (id, name, price, outward, returnDist)
+- All profiles (id, name, type, color, all numeric parameters, notes text)
+- All stations (id, name, price, outward, returnDist, notes text)
 - Active profile ID
 - Current theme (dark/light)
 - Daily Km value for the savings estimator
