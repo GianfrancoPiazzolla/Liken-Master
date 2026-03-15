@@ -104,8 +104,10 @@ The **Stations** tab manages all your charging locations. Each station is indepe
 #### ➕ Adding & Managing Stations
 - **Add** a station via the dashed `+ Add Charging Station` button (defaults: 0.40 €/kWh, 10 Km each way)
 - **Rename** by typing directly in the station name input field
+- **Enable / Disable** a station via the toggle switch (⚙️) in the station header — see [Station Enable Toggle](#-station-enable-toggle) below
 - **Duplicate** a station (📋 copy icon) — useful to test what-if pricing scenarios
 - **Delete** a station (🗑️ trash icon)
+- **Reorder** stations with ▲/▼ buttons (order affects chart colors and ranking display)
 - Stations are listed in order; their **color** is assigned from a rotating palette matching the chart series
 
 #### 🔧 Station Parameters (interactive sliders per station)
@@ -127,6 +129,20 @@ Each station card shows a live 3-column summary row:
 Each station card includes a free-text **Notes** field rendered below the summary footer.
 - A compact multi-line `<textarea>` (2 rows) lets you annotate each station with custom remarks — e.g. connector type, parking instructions, access restrictions, or pricing quirks
 - Notes are bound per-station via `data-idx` attribute and saved in real time on every keystroke, persisting to `localStorage` as part of the station object (`st.notes`)
+
+#### 🔘 Station Enable Toggle
+Each station card header contains a small **toggle switch** that controls whether the station is included in all calculations and visualisations.
+
+- **Enabled** (default) — the switch is ON (teal highlight); the station participates fully in effective cost calculations, chart curves, the ranking table, and the Stats dashboard
+- **Disabled** — the switch is OFF; the station card dims to 45% opacity and receives a visual `DISABLED` badge next to its name. The station is **excluded** from:
+  - All chart series (Effective Cost, Savings vs ICE, Ranking table)
+  - The Stats tab best-station highlight and efficiency meter bars
+  - The Yearly Savings Estimator
+- The toggle fires `toggleStation(index, enabled)`, which updates `st.enabled` on the station object, immediately re-renders the station card, and triggers a full chart and stats refresh
+- The enabled/disabled state is persisted to `localStorage` as part of the station object (`st.enabled`); newly created stations default to `enabled: true`
+- A brief **toast notification** confirms the action: *"Station enabled"* (✓) or *"Station disabled"* (○)
+
+> 💡 **Use case:** Temporarily disable a station (e.g. one that is closed for maintenance or too far away) to see how costs and rankings change without permanently deleting it.
 
 ---
 
@@ -254,7 +270,7 @@ A visual bar chart comparing all stations:
 #### 🗃️ Local State (`localStorage`)
 All application state is serialized to `localStorage` under a single key (`likenmaster_state`), including:
 - All profiles (id, name, type, color, all numeric parameters, notes text)
-- All stations (id, name, price, outward, returnDist, notes text)
+- All stations (id, name, price, outward, returnDist, notes text, enabled state)
 - Active profile ID
 - Current theme (dark/light)
 - Daily Km value for the savings estimator
@@ -392,6 +408,7 @@ Station System
   └── addStation()             Default new station
   └── removeStation()          Delete station
   └── duplicateStation()       Clone station
+  └── toggleStation()          Enable/disable station
 
 Calculation Engine
   └── calcEffectiveCost()      Core physics formula
