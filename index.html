@@ -1434,7 +1434,7 @@ function renderRankingTable(ap){
         }).join('')}
       </tbody>
     </table>
-    <div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging a full SoC window.</br>Lower €/kWh = better. ▼ = cheaper than ICE.</div>
+    <div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging a full SoC window.</br>Lower €/kWh = better. ▼ = cheaper than ICE; ▲ = priceier than ICE.</div>
   `;
 }
 
@@ -1521,10 +1521,10 @@ function updateStats(){
       html+=`
       <div class="card" style="border-color:var(--accent)">
         <div class="card-title"><div class="card-title-icon">⭐</div>Best Deal</div>
-        <div style="font-family:var(--font-display);font-weight:800;font-size:1.1rem;margin-bottom:8px">${esc(bestStation.name)}</div>
+        <div style="font-family:var(--font-display);font-weight:800;font-size:1.1rem;margin-bottom:8px">${esc(bestStation.nam)}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <span class="badge badge-green">${bestCost.toFixed(2)} €/kWh</span>
-          ${bestCost<breakeven?`<span class="badge badge-green">▼ Beats ICE by ${(breakeven-bestCost).toFixed(2)} €/kWh</span>`:'<span class="badge badge-red">▲ Above breakeven</span>'}
+          ${bestCost<breakeven?`<span class="badge badge-green">▼ -${(breakeven-bestCost).toFixed(2)} €/kWh vs ICE</span>`:`<span class="badge badge-red">▲ -${(bestCost-breakeven).toFixed(2)} €/kWh vs ICE</span>`}
           <span class="badge badge-blue">${retSOC.toFixed(0)}% Return SoC</span>
         </div>
       </div>`;
