@@ -181,6 +181,17 @@ input[type=range]::-webkit-slider-runnable-track{height:6px;background:transpare
 .station-notes-input::placeholder{color:var(--text-dim)}
 .station-notes-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
 
+/* ===== STATION TOGGLE ===== */
+.station-toggle{position:relative;display:inline-flex;align-items:center;cursor:pointer;flex-shrink:0}
+.station-toggle input{opacity:0;width:0;height:0;position:absolute}
+.station-toggle-track{width:36px;height:20px;background:var(--surface3);border:1px solid var(--border2);border-radius:20px;transition:background .2s,border-color .2s;position:relative;flex-shrink:0}
+.station-toggle input:checked~.station-toggle-track{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px rgba(0,245,196,.35)}
+.station-toggle-thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s,box-shadow .2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.station-toggle input:checked~.station-toggle-track .station-toggle-thumb{transform:translateX(16px)}
+.station-card.station-disabled{opacity:.45}
+.station-card.station-disabled .station-header{background:var(--surface)}
+.station-disabled-badge{font-size:.58rem;color:var(--text-dim);letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-left:4px;font-family:var(--font-display)}
+
 /* ===== GRAPHS ===== */
 .graph-header{padding:16px 16px 0;flex-shrink:0;max-width:720px;margin:0 auto;width:100%}
 .graph-tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
@@ -641,6 +652,12 @@ function renderProfileListInModal(){
         <div style="font-size:.68rem;color:var(--text-muted);margin-top:2px">${p.type} · ${p.type==='BEV'?p.capacity+' kWh':'—'}</div>
       </div>
       <span class="badge ${p.type==='BEV'?'badge-green':'badge-orange'}">${p.type}</span>
+      <button class="icon-btn dup" title="Edit" onclick="openEditProfile('${p.id}')">
+        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <button class="icon-btn del" title="Delete" onclick="deleteProfile('${p.id}')">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
       <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
         <button class="icon-btn" title="Move up" onclick="moveProfile('${p.id}',-1)" ${i===0?'disabled style="opacity:.25;cursor:default"':''} style="width:26px;height:26px;border-radius:6px">
           <svg viewBox="0 0 24 24" width="12" height="12"><polyline points="18 15 12 9 6 15"/></svg>
@@ -649,12 +666,6 @@ function renderProfileListInModal(){
           <svg viewBox="0 0 24 24" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
       </div>
-      <button class="icon-btn dup" title="Edit" onclick="openEditProfile('${p.id}')">
-        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      </button>
-      <button class="icon-btn del" title="Delete" onclick="deleteProfile('${p.id}')">
-        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-      </button>
     </div>
   `).join('');
 }
@@ -957,11 +968,18 @@ function renderStations(){
     const card = document.createElement('div');
     card.className='station-card';
     card.dataset.idx=i;
+    if(st.enabled===false) card.classList.add('station-disabled');
     card.innerHTML=`
       <div class="station-header">
         <div class="station-color" style="background:${color}"></div>
         <input class="station-name-input" type="text" placeholder="" value="${esc(st.name)}" data-idx="${i}">
         <div class="station-actions">
+          <button class="icon-btn dup" title="Duplicate" onclick="duplicateStation(${i})">
+            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+          <button class="icon-btn del" title="Remove" onclick="removeStation(${i})">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
           <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
             <button class="icon-btn" title="Move up" onclick="moveStation(${i},-1)" ${i===0?'disabled style="opacity:.25;cursor:default"':''} style="width:26px;height:26px;border-radius:6px">
               <svg viewBox="0 0 24 24" width="12" height="12"><polyline points="18 15 12 9 6 15"/></svg>
@@ -970,12 +988,10 @@ function renderStations(){
               <svg viewBox="0 0 24 24" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
           </div>
-          <button class="icon-btn dup" title="Duplicate" onclick="duplicateStation(${i})">
-            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          </button>
-          <button class="icon-btn del" title="Remove" onclick="removeStation(${i})">
-            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-          </button>
+          <label class="station-toggle" title="${st.enabled===false?'Enable station':'Disable station'}">
+            <input type="checkbox" data-idx="${i}" ${st.enabled===false?'':'checked'} onchange="toggleStation(${i},this.checked)">
+            <div class="station-toggle-track"><div class="station-toggle-thumb"></div></div>
+          </label>
         </div>
       </div>
       <div class="station-fields">
@@ -1072,7 +1088,7 @@ function updateStationSummary(i){
 }
 
 document.getElementById('addStationBtn').onclick=()=>{
-  state.stations.push({id:uid(),name:`Station ${state.stations.length+1}`,price:0.40,outward:10,returnDist:10});
+  state.stations.push({id:uid(),name:`Station ${state.stations.length+1}`,price:0.40,outward:10,returnDist:10,enabled:true});
   saveState(); renderStations(); updateChart(); updateStats();
   showToast('Station added','⚡');
 };
@@ -1097,6 +1113,14 @@ function moveStation(i, direction){
   [arr[i], arr[newIdx]] = [arr[newIdx], arr[i]];
   state.stations = arr;
   saveState(); renderStations(); updateChart(); updateStats();
+}
+
+function toggleStation(i, enabled){
+  state.stations[i].enabled = enabled;
+  const card = document.querySelector(`.station-card[data-idx="${i}"]`);
+  if(card) card.classList.toggle('station-disabled', !enabled);
+  saveState(); updateChart(); updateStats();
+  showToast(enabled ? 'Station enabled' : 'Station disabled', enabled ? '✓' : '○');
 }
 
 // ============================================================
@@ -1189,6 +1213,7 @@ function updateChart(){
     titleEl.textContent='Effective Charging Cost vs Battery %';
     const curveData=[];
     state.stations.forEach((st,si)=>{
+      if(st.enabled===false) return;
       const color=STATION_COLORS[si%STATION_COLORS.length];
       const stLabel=st.name||`Station ${si+1}`;
       const data=labels.map(lbl=>calcEffectiveCost(st,ap,parseFloat(lbl)));
@@ -1210,6 +1235,7 @@ function updateChart(){
     datasets.push({label:'ICE Breakeven',data:labels.map(()=>breakeven),borderColor:'#a6a6a6',backgroundColor:'transparent',borderWidth:2,borderDash:[8,4],pointRadius:0});
     legendItems.push({color:'#a6a6a6',label:'ICE Breakeven',type:'dash'});
     state.stations.forEach((st,si)=>{
+      if(st.enabled===false) return;
       const color=STATION_COLORS[si%STATION_COLORS.length];
       const retSOC=calcReturnSOC(st,ap);
       const xIdx=Math.round((retSOC-minSoc)/(maxSoc-minSoc)*steps);
@@ -1244,6 +1270,7 @@ function updateChart(){
     }
     const allSavingsData=[];
     state.stations.forEach((st,si)=>{
+      if(st.enabled===false) return;
       const color=STATION_COLORS[si%STATION_COLORS.length];
       const data=labels.map(lbl=>{
         const eff=calcEffectiveCost(st,ap,parseFloat(lbl));
@@ -1275,6 +1302,7 @@ function updateChart(){
   } else if(activeChart==='range'){
     titleEl.textContent='Remaining Range After Round Trip';
     state.stations.forEach((st,si)=>{
+      if(st.enabled===false) return;
       const color=STATION_COLORS[si%STATION_COLORS.length];
       const data=labels.map(lbl=>{
         const soc=parseFloat(lbl);
@@ -1397,7 +1425,8 @@ function renderRankingTable(ap){
   }
   const minSOC=ap.minlevel;
   const breakeven=(ap.icecost/ap.iceeff)*ap.beveff;
-  const ranked=state.stations.map((st,i)=>{
+  const ranked=state.stations.filter(st=>st.enabled!==false).map((st)=>{
+    const i=state.stations.indexOf(st);
     const eff=calcEffectiveCost(st,ap,minSOC);
     const savings=calcSavingsPerKm(st,ap);
     const retSOC=calcReturnSOC(st,ap);
@@ -1455,7 +1484,7 @@ function updateStats(){
 
   let bestStation=null, bestCost=Infinity, worstStation=null, worstCost=-Infinity;
   if(isBEV){
-    state.stations.forEach(st=>{
+    state.stations.filter(st=>st.enabled!==false).forEach(st=>{
       const eff=calcEffectiveCost(st,ap,minSOC);
       if(eff!==null){
         if(eff<bestCost){bestCost=eff;bestStation=st;}
@@ -1494,13 +1523,14 @@ function updateStats(){
     </div>`:''}
   </div>`;
 
-  if(isBEV&&state.stations.length>0){
+  if(isBEV&&state.stations.filter(st=>st.enabled!==false).length>0){
     html+=`
     <div class="card">
       <div class="card-title"><div class="card-title-icon">🏆</div>Station Performance</div>
       <div class="eff-meter">`;
-    const maxEff=Math.max(...state.stations.map(st=>calcEffectiveCost(st,ap,minSOC)||0));
+    const maxEff=Math.max(...state.stations.filter(st=>st.enabled!==false).map(st=>calcEffectiveCost(st,ap,minSOC)||0));
     state.stations.forEach((st,i)=>{
+      if(st.enabled===false) return;
       const eff=calcEffectiveCost(st,ap,minSOC);
       const sav=calcSavingsPerKm(st,ap);
       const color=STATION_COLORS[i%STATION_COLORS.length];
@@ -1521,7 +1551,7 @@ function updateStats(){
       html+=`
       <div class="card" style="border-color:var(--accent)">
         <div class="card-title"><div class="card-title-icon">⭐</div>Best Deal</div>
-        <div style="font-family:var(--font-display);font-weight:800;font-size:1.1rem;margin-bottom:8px">${esc(bestStation.nam)}</div>
+        <div style="font-family:var(--font-display);font-weight:800;font-size:1.1rem;margin-bottom:8px">${esc(bestStation.name)}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <span class="badge badge-green">${bestCost.toFixed(2)} €/kWh</span>
           ${bestCost<breakeven?`<span class="badge badge-green">▼ -${(breakeven-bestCost).toFixed(2)} €/kWh vs ICE</span>`:`<span class="badge badge-red">▲ -${(bestCost-breakeven).toFixed(2)} €/kWh vs ICE</span>`}
@@ -1589,7 +1619,7 @@ function recomputeSavings(){
   const minSOC = ap.minlevel;
   const breakeven = (ap.icecost / ap.iceeff) * ap.beveff;
   let bestStation = null, bestCost = Infinity;
-  state.stations.forEach(st=>{
+  state.stations.filter(st=>st.enabled!==false).forEach(st=>{
     const eff = calcEffectiveCost(st, ap, minSOC);
     if(eff !== null && eff < bestCost){ bestCost = eff; bestStation = st; }
   });
@@ -1678,6 +1708,8 @@ function init(){
   if(!state.stations) state.stations=[];
   if(!state.theme) state.theme='dark';
   if(!state.dailyKm) state.dailyKm=50;
+  // migrate stations without enabled flag
+  state.stations.forEach(st=>{ if(st.enabled===undefined) st.enabled=true; });
   // default profile if none
   if(!state.profiles.length){
     const p={id:uid(),name:'My BEV',type:'BEV',color:PROFILE_COLORS[0],...DEFAULT_BEV};
