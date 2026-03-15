@@ -1143,6 +1143,19 @@ function calcEffectiveCost(station,v,soc_pct){
   return totalCost/netEnergy;
 }
 
+function calcTotalChargingCost(station,v,soc_pct){
+  if(!v||v.type!=='BEV') return null;
+  const cap=v.capacity;
+  const energyAvail=cap*soc_pct/100;
+  const outEnergy=station.outward/v.beveff;
+  const energyAtStation=energyAvail-outEnergy;
+  if(energyAtStation<0) return null;
+  const maxCharge=cap*v.maxlevel/100-energyAtStation;
+  if(maxCharge<=0) return null;
+  const totalEnergyPaid=maxCharge+outEnergy;
+  return totalEnergyPaid*station.price;
+}
+
 function calcReturnSOC(station,v){
   if(!v||v.type!=='BEV') return 0;
   const cap=v.capacity;
@@ -1533,6 +1546,7 @@ function updateStats(){
       if(st.enabled===false) return;
       const eff=calcEffectiveCost(st,ap,minSOC);
       const sav=calcSavingsPerKm(st,ap);
+      const totalCost=calcTotalChargingCost(st,ap,minSOC);
       const color=STATION_COLORS[i%STATION_COLORS.length];
       const isGood=eff!==null&&eff<breakeven;
       html+=`
@@ -1541,7 +1555,10 @@ function updateStats(){
           <div class="eff-bar">
             <div class="eff-bar-fill" style="width:${eff!==null?(eff/maxEff*100).toFixed(1):0} %;background:${isGood?color:'var(--danger)'}"></div>
           </div>
-          <div class="eff-val" style="color:${isGood?'var(--accent)':'var(--danger)'}">${eff!==null?eff.toFixed(2)+' €/kWh':'—'}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">
+            <div class="eff-val" style="color:${isGood?'var(--accent)':'var(--danger)'}">${eff!==null?eff.toFixed(2)+' €/kWh':'—'}</div>
+            <div style="font-family:var(--font-mono);font-size:.65rem;color:var(--text-muted);white-space:nowrap">${totalCost!==null?totalCost.toFixed(2)+' € spent':'—'}</div>
+          </div>
         </div>`;
     });
     html+=`<div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging a full SoC window.</div></div></div>`;
