@@ -175,7 +175,7 @@ input[type=range]::-webkit-slider-runnable-track{height:6px;background:transpare
 .st-sum-item{text-align:center}
 .st-sum-label{font-size:.58rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
 .st-sum-val{font-family:var(--font-mono);font-size:.88rem;font-weight:700;color:var(--text);margin-top:2px}
-.station-notes-wrap{padding:10px 16px 14px;border-top:1px solid var(--border)}
+.station-notes-wrap{padding:10px 16px 14px;border-top:0px solid var(--border)}
 .station-notes-label{font-size:.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:6px}
 .station-notes-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-family:var(--font-display);font-size:.82rem;font-weight:400;outline:none;resize:none;min-height:60px;transition:border-color .2s;line-height:1.5}
 .station-notes-input::placeholder{color:var(--text-dim)}
@@ -962,6 +962,14 @@ function renderStations(){
         <div class="station-color" style="background:${color}"></div>
         <input class="station-name-input" type="text" placeholder="" value="${esc(st.name)}" data-idx="${i}">
         <div class="station-actions">
+          <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+            <button class="icon-btn" title="Move up" onclick="moveStation(${i},-1)" ${i===0?'disabled style="opacity:.25;cursor:default"':''} style="width:26px;height:26px;border-radius:6px">
+              <svg viewBox="0 0 24 24" width="12" height="12"><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+            <button class="icon-btn" title="Move down" onclick="moveStation(${i},1)" ${i===state.stations.length-1?'disabled style="opacity:.25;cursor:default"':''} style="width:26px;height:26px;border-radius:6px">
+              <svg viewBox="0 0 24 24" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </div>
           <button class="icon-btn dup" title="Duplicate" onclick="duplicateStation(${i})">
             <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
           </button>
@@ -1080,6 +1088,15 @@ function duplicateStation(i){
   state.stations.splice(i+1,0,st);
   saveState(); renderStations(); updateChart(); updateStats();
   showToast('Station duplicated','📋');
+}
+
+function moveStation(i, direction){
+  const newIdx = i + direction;
+  if(newIdx<0 || newIdx>=state.stations.length) return;
+  const arr = [...state.stations];
+  [arr[i], arr[newIdx]] = [arr[newIdx], arr[i]];
+  state.stations = arr;
+  saveState(); renderStations(); updateChart(); updateStats();
 }
 
 // ============================================================
