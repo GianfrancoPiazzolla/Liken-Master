@@ -307,10 +307,10 @@ canvas{width:100%!important;height:100%!important}
 
 /* ===== EFFICIENCY METER ===== */
 .eff-meter{display:flex;flex-direction:column;gap:10px;margin-top:16px}
-.eff-row{display:grid;grid-template-columns:120px 1fr 80px;align-items:center;gap:10px;font-size:.78rem}
+.eff-row{display:grid;grid-template-columns:120px 1fr 80px;align-items:center;gap:15px;font-size:.78rem}
 .eff-name{color:var(--text-muted);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.eff-bar{height:8px;background:var(--surface3);border-radius:8px;overflow:hidden}
-.eff-bar-fill{height:100%;border-radius:8px;transition:width .8s cubic-bezier(.22,1,.36,1)}
+.eff-bar{height:30px;background:var(--surface3);border-radius:8px;overflow:hidden}
+.eff-bar-fill{height:100%;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:width .8s cubic-bezier(.22,1,.36,1)}
 .eff-val{font-family:var(--font-mono);font-weight:700;text-align:right;white-space:nowrap}
 
 /* ===== TOAST ===== */
@@ -806,8 +806,8 @@ function renderVehicleSection(){
     <div class="card">
       <div class="card-title"><div class="card-title-icon">🔋</div>Battery Pack</div>
       ${sliderField('capacity','Battery Capacity','kWh',10,200,0.5,ap.capacity,1)}
-      ${sliderField('minlevel','Min SoC Limit','%',5,99,1,ap.minlevel,0)}
-      ${sliderField('maxlevel','Max SoC Limit','%',6,100,1,ap.maxlevel,0)}
+      ${sliderField('minlevel','Min Start Driving SoC Limit','%',5,99,1,ap.minlevel,0)}
+      ${sliderField('maxlevel','Max End Charging SoC Limit','%',6,100,1,ap.maxlevel,0)}
       <div class="info-grid" style="margin-top:16px">
         <div class="info-chip">
           <div class="info-chip-label">Usable Capacity</div>
@@ -1476,7 +1476,7 @@ function renderRankingTable(ap){
         }).join('')}
       </tbody>
     </table>
-    <div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging a full SoC window.</br>Lower €/kWh = better. ▼ = cheaper than ICE; ▲ = priceier than ICE.</div>
+    <div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging at least a full SoC window.</br>Lower €/kWh = better. ▼ = cheaper than ICE; ▲ = priceier than ICE.</div>
   `;
 }
 
@@ -1553,15 +1553,15 @@ function updateStats(){
         <div class="eff-row">
           <div class="eff-name" title="${esc(st.name)}">${esc(st.name||`Station ${i+1}`)}</div>
           <div class="eff-bar">
-            <div class="eff-bar-fill" style="width:${eff!==null?(eff/maxEff*100).toFixed(1):0} %;background:${isGood?color:'var(--danger)'}"></div>
+            <div class="eff-bar-fill" style="width:${eff!==null?(eff/maxEff*100).toFixed(0):0}%;background:${isGood?color:'var(--danger)'}">${(eff/maxEff*100).toFixed(2)} %</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">
             <div class="eff-val" style="color:${isGood?'var(--accent)':'var(--danger)'}">${eff!==null?eff.toFixed(2)+' €/kWh':'—'}</div>
-            <div style="font-family:var(--font-mono);font-size:.65rem;color:var(--text-muted);white-space:nowrap">${totalCost!==null?totalCost.toFixed(2)+' € spent':'—'}</div>
+            <div style="font-family:var(--font-mono);font-size:.65rem;color:var(--text-muted);white-space:nowrap">${totalCost!==null?totalCost.toFixed(2)+'€ eq. cost':'—'}</div>
           </div>
         </div>`;
     });
-    html+=`<div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging a full SoC window.</div></div></div>`;
+    html+=`<div style="font-size:.65rem;color:var(--text-dim);margin-top:10px;padding:0 2px">* Calculated charging at least a full SoC window.</div></div></div>`;
 
     if(bestStation){
       const retSOC = calcReturnSOC(bestStation,ap);
