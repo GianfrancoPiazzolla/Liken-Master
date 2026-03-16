@@ -67,8 +67,8 @@ LikenMaster supports multiple vehicle profiles so you can compare different cars
 | Parameter | Range | Unit | Description |
 |---|---|---|---|
 | Battery Capacity | 10 – 200 | kWh | Total nominal battery size |
-| Min SOC Limit | 5 – 99 | % | Lower charging/usage boundary |
-| Max SOC Limit | Min SOC Limit+1 – 100 | % | Upper charging limit |
+| Min Start Driving SoC Limit | 5 – 99 | % | Lower charging boundary to start a new drive |
+| Max SOC Limit | Min SOC Limit+1 – 100 | % | Upper charging boundary limit |
 | EV Efficiency | 1 – 15 | Km/kWh | Real-world driving efficiency |
 
 **Derived chips (auto-computed in real time):**
