@@ -1554,7 +1554,7 @@ function updateStats(){
           <div class="eff-name" title="${esc(st.name)}">${esc(st.name||`Station ${i+1}`)}</div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">
             <div class="eff-val" style="color:${isGood?'var(--accent)':'var(--danger)'}">${eff!==null?eff.toFixed(2)+' €/kWh':'—'}</div>
-            <div style="font-family:var(--font-mono);font-size:.65rem;color:var(--text-muted);white-space:nowrap">${totalCost!==null?totalCost.toFixed(2)+'€ eq. cost':'—'}</div>
+            <div style="font-family:var(--font-mono);font-size:.65rem;color:var(--text-muted);white-space:nowrap">${totalCost!==null?totalCost.toFixed(2)+' € eq. cost':'—'}</div>
           </div>
           <div class="eff-bar">
             <div class="eff-bar-fill" style="width:${eff!==null?(eff/maxEff*100).toFixed(1):0}%;background:${isGood?color:'var(--danger)'}">${(eff/maxEff*100).toFixed(2)} %</div>
