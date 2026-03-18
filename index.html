@@ -1626,7 +1626,7 @@ function savingsValuesHTML(yearlySaving){
       <div class="stat-label">Yearly</div>
       <div class="stat-val" id="sav-yearly">${yearlySaving.toFixed(2)}<span> €</span></div>
       <div class="stat-bar" style="margin-top:10px">
-        <div class="stat-bar-fill" id="sav-bar" style="width:${Math.min(yearlySaving,100).toFixed(2)} %;background:linear-gradient(90deg,var(--accent2),var(--accent))"></div>
+        <div class="stat-bar-fill" id="sav-bar" style="width:${Math.min(yearlySaving/100,100).toFixed(0)}%;background:linear-gradient(90deg,var(--accent2),var(--accent))"></div>
       </div>
     </div>`;
 }
