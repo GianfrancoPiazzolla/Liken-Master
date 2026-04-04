@@ -22,8 +22,8 @@
   - [⚡ Charging Stations](#-charging-stations)
   - [📊 Cost Analysis Charts](#-cost-analysis-charts)
   - [📈 Smart Stats Dashboard](#-smart-stats-dashboard)
-  - [🎨 UI & Experience](#-ui--experience)
-  - [💾 Data Persistence & PWA](#-data-persistence--pwa)
+- [🎨 UI & Experience](#-ui--experience)
+- [💾 Data Persistence & PWA](#-data-persistence--pwa)
 - [Physics & Calculation Engine](#-physics--calculation-engine)
 - [Tech Stack](#-tech-stack)
 - [Getting Started](#-getting-started)
@@ -61,7 +61,7 @@ LikenMaster supports multiple vehicle profiles so you can compare different cars
 - **Edit** an existing profile's name and color
 - **Delete** a profile (last profile is protected from deletion)
 - **Reorder** profiles with ▲/▼ buttons (order affects chart colors and ranking display)
-- **Default profile** — on first launch, a "My Tesla" BEV profile is created automatically
+- **Default profile** — on first launch, a "My BEV" BEV profile is created automatically with 75 kWh capacity
 
 #### 🔋 BEV-Specific Parameters (interactive sliders)
 | Parameter | Range | Unit | Description |
@@ -209,7 +209,7 @@ A visual bar chart comparing all stations:
 - The best station bar is colored teal (accent), others are blue
 
 #### 💰 Yearly Savings Estimator
-- Input field for **daily Km driven** (range: 1–2000 Km/day), with ±1 step buttons
+- Input field for **daily Km driven** (range: 1–2000 Km/day), with **±10** step buttons
 - Auto-computes:
   - 💵 **Weekly savings** in €
   - 📅 **Monthly savings** in €
@@ -254,21 +254,114 @@ A visual bar chart comparing all stations:
 
 #### 🍞 Toast Notifications
 - Brief non-blocking feedback toasts appear above the nav bar
-- Triggered by: profile create/delete, station add/remove/duplicate, etc.
-- Auto-dismiss after ~2 seconds with fade animation
+- Triggered by: profile create/delete, station add/remove/duplicate, station enable/disable, etc.
+- Auto-dismiss after **2.2 seconds** with fade animation
+- Toast icon is colored with the accent color (`var(--accent)`)
+
+#### ℹ️ About Modal
+Accessible via the **⭐** button in the header.
+
+**📋 Contents:**
+- **⚡ App Logo** — Lightning bolt icon on accent-dim background with accent border and glow shadow
+- **🏷️ App Name** — "LikenMaster" with gradient display font
+- **🔢 Tagline** — "EV Cost Intelligence"
+- **👤 Author Card** — Avatar with initials ("GP"), author name (Gianfranco Piazzolla), and tagline ("Pushing the vibe coding era beyond!")
+- **📝 Synopsis** — Brief description of the app's purpose
+- **🔗 GitHub Repository** — Direct link to the Liken Master repository
+- **💻 More Apps** — Link to the author's GitHub profile
+- **📜 License** — MIT License summary
+- **🌱 Community note** — Encouragement to leave a star on GitHub
+
+**🎭 UI Behavior:**
+- Modal dialog (centered on desktop ≥480px, bottom sheet on mobile) with backdrop blur (`6px`) and 70% black dimming
+- Scale-in entrance animation on desktop (`scale(0.92) → scale(1)`), slide-up on mobile (`translateY(60px) → 0`)
+- Touch handle bar visible only on mobile (`display: none` on desktop)
+- Close via the **Close** button at the bottom or by clicking the backdrop
 
 #### ♿ Accessibility
 - All interactive elements use semantic HTML (`<button>`, `<input>`)
 - Focus ring via border/box-shadow on focused inputs
 - `title` attributes on icon buttons for tooltip hints
 - `role="dialog"` on modal overlays
+- `-webkit-tap-highlight-color: transparent` removes the default blue tap highlight on mobile for a cleaner feel
+
+#### 🎨 Visual Details
+- **Card top accent line** — every `.card` has a subtle `::before` pseudo-element with a horizontal gradient (`transparent → accent-dim → transparent`) along the top edge
+- **Slider thumb effects** — hover scales the thumb to 1.2× and increases the glow shadow from `12px` to `20px` radius
+- **Button press effect** — `.btn-primary:active` applies `scale(0.97)` for tactile feedback
+- **Color swatch selection** — selected swatch gets a white border and `scale(1.15)` transform
+- **Station card hover** — border color transitions from `var(--border)` to `var(--border2)` on hover
+- **Profile type buttons** — BEV button uses accent color (`var(--accent)`), ICE button uses accent3 (`var(--accent3)`) when active
+- **Badge variants (4 types):**
+  - 🟢 **Green** (`badge-green`) — accent-dim background, accent border, accent text
+  - 🔵 **Blue** (`badge-blue`) — accent2-dim background, accent2 border, accent2 text
+  - 🟠 **Orange** (`badge-orange`) — accent3-dim background, accent3 border, accent3 text
+  - 🔴 **Red** (`badge-red`) — danger-dim background, danger border, danger text
+
+#### 📱 Mobile Optimizations
+- **Tap highlight disabled** — `-webkit-tap-highlight-color: transparent` on all elements
+- **Smooth scroll** — sections use `-webkit-overflow-scrolling: touch` and `scroll-behavior: smooth`
+- **Overflow management** — `html, body` use `overflow: hidden` with scrollable sections for controlled scrolling
+- **Graph section** — uses `display: flex; flex-direction: column; overflow: hidden` for a full-height chart layout without outer scroll
+
+#### 📑 Tab Transitions
+- **Entrance animation** — active sections use `slideUp` keyframe (`opacity: 0 → 1`, `translateY(14px) → 0`) with `cubic-bezier(0.22, 1, 0.36, 1)` easing over 300ms
+- **Exit animation** — `.tab-exit` class applies `slideDown` keyframe (`opacity: 0`, `translateY(-10px)`) over 250ms
+
+#### 📊 Chart Details
+- **Animation** — all charts use `600ms` duration with `easeInOutQuart` easing
+- **Interaction** — `mode: 'index', intersect: false` for crosshair-style tooltip across all datasets
+- **Tooltip theming** — background, border, title, and body colors adapt to the active theme (dark/light)
+- **Font pairing** — tooltips use `Outfit` (title, 700, 11px) and `JetBrains Mono` (body, 11px)
+- **X-axis tick filtering** — only integer SOC values are displayed (`maxTicksLimit: 11`)
+- **Graph tab switch** — switching between chart tabs clears the `hiddenSeries` set, resetting all series to visible
+
+#### 🏅 Ranking Table Details
+- **Medal colors** — 🥇 gold (`#ffd94f`), 🥈 silver (`#c0c8d8`), 🥉 bronze (`#b87333`); ranks 4+ use `var(--surface3)`
+- **vs ICE badges** — inline `badge-green` (▼ cheaper) or `badge-red` (▲ pricier) with absolute delta × 100
+- **Return SoC coloring** — green if >20%, red if ≤20%
+- **Footer note** — explains calculation basis and symbol meanings
+
+#### 📈 Station Performance Details
+- **Eq.cost display** — each station row shows the equivalent total charging cost in € below the effective cost value
+- **Efficiency bar** — percentage fill relative to the worst station's cost, colored accent for cheaper-than-ICE, danger for pricier
+
+#### ⭐ Best Deal Details
+- **Return SoC badge** — a blue `badge-blue` showing the estimated Return SoC percentage alongside the cost badges
+
+#### 💰 Savings Details
+- **Progress bar** — yearly savings bar fills proportionally up to €100 (capped at 100%), using a blue→teal gradient
+- **Conditional rendering** — the savings section only appears when the best station beats the breakeven price AND savings per Km is positive
+
+#### 🗂️ Interactive Legend Details
+- **Minimum series guard** — prevents hiding all series at once; requires at least one visible series (shows warning toast if attempted)
+- **Click animation** — legend items scale to 0.93 on click with a 120ms transition
+- **Hint text** — "Tap a label to show/hide its curve" with "▲ = Return SoC" explanation
+
+#### 🔧 Station Management Details
+- **Duplicate behavior** — new station is inserted **immediately after** the original (`splice(i+1, 0, st)`) with "(copy)" suffix
+- **Default station values** — price: 0.40 €/kWh, outward: 10 Km, returnDist: 10 Km, enabled: true
+
+#### 🛡️ State Integrity
+- **Init checks** — on startup, missing `profiles`, `stations`, `theme`, and `dailyKm` are initialized with defaults
+- **Station enabled migration** — stations without an `enabled` flag (from older versions) are automatically set to `true`
+- **Active profile fallback** — if `activeProfileId` is null but profiles exist, the first profile is auto-selected
+
+#### 📝 HTML Escape Utility
+- `esc()` function sanitizes user input for safe HTML rendering, escaping `&`, `"`, and `<` characters
+
+#### 🔌 Additional Physics Function
+- **`calcTotalChargingCost()`** — computes the total € paid for a full charge session at a given SOC, including transit energy costs (distinct from `calcEffectiveCost` which returns €/kWh)
+
+#### 🔤 Font Imports
+- Two Google Fonts imports are loaded: `Outfit` (300–900) + `JetBrains Mono` (300–700) are actively used; `Clash Display` and `Space Mono` are also imported but unused in the current codebase
 
 ---
 
 ### 💾 Data Persistence & PWA
 
 #### 🗃️ Local State (`localStorage`)
-All application state is serialized to `localStorage` under a single key (`likenmaster_state`), including:
+All application state is serialized to `localStorage` under a single key (`likenmaster_v2`), including:
 - All profiles (id, name, type, color, all numeric parameters, notes text)
 - All stations (id, name, price, outward, returnDist, notes text, enabled state)
 - Active profile ID
